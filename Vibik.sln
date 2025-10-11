@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibik", "Vibik\Vibik.csproj", "{6C3FBC1C-7888-465D-B844-1EAF9BEF219F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{40741CA5-BEE0-443A-BC53-BE189600D4A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{AFCBB17F-EB22-47EB-B50F-07F5057C1476}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{6C3FBC1C-7888-465D-B844-1EAF9BEF219F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C3FBC1C-7888-465D-B844-1EAF9BEF219F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C3FBC1C-7888-465D-B844-1EAF9BEF219F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40741CA5-BEE0-443A-BC53-BE189600D4A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40741CA5-BEE0-443A-BC53-BE189600D4A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40741CA5-BEE0-443A-BC53-BE189600D4A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40741CA5-BEE0-443A-BC53-BE189600D4A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFCBB17F-EB22-47EB-B50F-07F5057C1476}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFCBB17F-EB22-47EB-B50F-07F5057C1476}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFCBB17F-EB22-47EB-B50F-07F5057C1476}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFCBB17F-EB22-47EB-B50F-07F5057C1476}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
