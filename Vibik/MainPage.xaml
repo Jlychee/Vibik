@@ -5,14 +5,18 @@
 
     <Grid BackgroundColor="{StaticResource NavySeal}">
         <ScrollView>
-            <!-- че-то тут добавим -->
+            <StackLayout x:Name="CardsHost"
+                         Orientation="Vertical"
+                         Spacing="12"
+                         Padding="16,16,16,100" />
+
         </ScrollView>
 
         <Frame
             BackgroundColor="{StaticResource LightYelloww}"
             Padding="0"
             HasShadow="False"
-            CornerRadius="20,20,0,0"
+            CornerRadius="0,0,0,0"
             VerticalOptions="End"
             HorizontalOptions="Fill"
             HeightRequest="70">
