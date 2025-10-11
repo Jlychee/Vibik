@@ -1,11 +1,19 @@
-﻿namespace Vibik;
+﻿using Microsoft.Extensions.Logging;
+using Vibik.Core.Application.Services;
+
+namespace Vibik;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
-    {
-        InitializeComponent();
-    }
+    private readonly ISessionManager sessionManager;
+    private readonly ILogger<MainPage> logger;
+
+    // public MainPage(ISessionManager sessionManager, ILogger<MainPage> logger)
+    // {
+    //     this.sessionManager = sessionManager;
+    //     this.logger = logger;
+    //     InitializeComponent();
+    // }
     
     private async void OnMapClicked(object sender, EventArgs e)
     {
