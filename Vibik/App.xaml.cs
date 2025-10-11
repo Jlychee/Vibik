@@ -10,18 +10,18 @@ public partial class App : Application
     private readonly ILogger<App> logger;
     private Session? currentSession;
 
-    public App(ISessionService sessionService, ILogger<App> logger)
+    public App()
     {
         // this.sessionService = sessionService;
         // this.logger = logger;
         InitializeComponent();
     }
 
-    protected override async void OnStart()
-    {
-        base.OnStart();
-        //await InitializeSessionAsync();
-    }
+    // protected override async void OnStart()
+    // {
+    //     base.OnStart();
+    //     //await InitializeSessionAsync();
+    // }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {

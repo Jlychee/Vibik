@@ -14,6 +14,11 @@ public partial class MainPage : ContentPage
     //     this.logger = logger;
     //     InitializeComponent();
     // }
+        public MainPage()
+    {
+
+        InitializeComponent();
+    }
     
     private async void OnMapClicked(object sender, EventArgs e)
     {
