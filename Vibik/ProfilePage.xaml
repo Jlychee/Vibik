@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Vibik.ProfilePage"
+             Title="Профиль">
+    
+    <ScrollView>
+        <VerticalStackLayout Spacing="25" Padding="30,40">
+            <Label Text="Мой профиль" 
+                   FontSize="32"
+                   TextColor="{StaticResource MilkChocolate}"
+                   HorizontalOptions="Center" />
+            
+            <Frame BackgroundColor="{StaticResource Gray100}" 
+                   Padding="20"
+                   CornerRadius="20"
+                   HorizontalOptions="Center">
+                <VerticalStackLayout Spacing="15" HorizontalOptions="Center">
+                    <Image Source="profile_icon.png" 
+                           HeightRequest="100"
+                           WidthRequest="100"
+                           Aspect="AspectFit" />
+                    
+                    <Label Text="Имя пользователя" 
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+                    
+                    <Label Text="user@example.com" 
+                           TextColor="{StaticResource MilkChocolate}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Frame>
+            
+            <Button Text="Редактировать профиль" 
+                    BackgroundColor="{StaticResource White}"
+                    TextColor="{StaticResource MilkChocolate}"
+                    HeightRequest="50"
+                    CornerRadius="10" />
+            
+            <Button Text="Назад" 
+                    Clicked="OnBackClicked"
+                    BackgroundColor="{StaticResource Gray300}"
+                    TextColor="{StaticResource Black}"
+                    HorizontalOptions="Center"
+                    WidthRequest="150" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
