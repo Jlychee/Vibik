@@ -12,15 +12,15 @@ public static class DataBaseManager
     private static string dbHost;
     private static string dbConnectionString;
 
-    private static void DataBaseInitialize()
+    public static void DataBaseInitialize()
     {
-        Env.Load();
+        Env.Load(@"C:\Programing\CSharp\Vibik\Infrastructure\.env");
         dbHost = Env.GetString("DB_HOST");
         dbPort = Env.GetInt("DB_PORT");
         dbName = Env.GetString("DB_NAME");
         dbUser = Env.GetString("DB_USER");
         dbPassword = Env.GetString("DB_PASSWORD");
-        dbConnectionString = $"server={dbHost};port={dbPort};database={dbName};user={dbUser};password={dbPassword}";
+        dbConnectionString = $"server={dbHost}; port={dbPort}; database={dbName}; username={dbUser}; password={dbPassword}";
     }
 
 
