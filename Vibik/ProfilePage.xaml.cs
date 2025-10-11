@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Vibik;
 
-public partial class Map : ContentPage
+public partial class ProfilePage : ContentPage
 {
-    public Map()
+    public ProfilePage()
     {
         InitializeComponent();
     }
