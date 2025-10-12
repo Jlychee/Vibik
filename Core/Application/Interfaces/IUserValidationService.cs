@@ -7,3 +7,4 @@ public interface IUserValidationService
     Task<User?> ValidateUserAsync(string username, string password);
     Task<bool> IsUserExistsAsync(string username);
 }
+
