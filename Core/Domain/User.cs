@@ -2,8 +2,8 @@
 
 public class User
 {
-    public string Name { get; private set; } = string.Empty;
-    public string NormalizedName { get; private set; } = string.Empty;
+    public string DisplayName { get; private set; } = string.Empty;
+    public string Username { get; private set; } = string.Empty;
     public int Experience { get; set; }
     public ICollection<TaskItem> TaskItems { get; private set; } = new List<TaskItem>();
 
@@ -11,17 +11,13 @@ public class User
     {
     }
 
-    public User(string name) => SetName(name);
-
-    private void SetName(string name)
+    public User(string username, string displayName)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Имя обязательно", nameof(name));
-        Name = name.Trim();
-        NormalizedName = Normalize(name);
+        Username = username.Trim().ToLowerInvariant();
+        DisplayName = displayName.Trim();
     }
-
-    private static string Normalize(string name) => name.Trim().ToLowerInvariant();
+    
+    public void ChanheDisplayName(string displayName) => DisplayName = displayName.Trim();
     
     internal void SetTasks(ICollection<TaskItem> tasks) => TaskItems = tasks;
     public void AddExperience(int experience) => Experience += experience;
