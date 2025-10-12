@@ -5,22 +5,16 @@ namespace Infrastructure;
 
 public static class DataBaseManager
 {
-    private static string dbPassword;
-    private static string dbUser;
-    private static string dbName;
-    private static int dbPort;
-    private static string dbHost;
     private static string dbConnectionString;
 
     public static void DataBaseInitialize()
     {
-        Env.Load(@"C:\Programing\CSharp\Vibik\Infrastructure\.env");
-        dbHost = Env.GetString("DB_HOST");
-        dbPort = Env.GetInt("DB_PORT");
-        dbName = Env.GetString("DB_NAME");
-        dbUser = Env.GetString("DB_USER");
-        dbPassword = Env.GetString("DB_PASSWORD");
-        dbConnectionString = $"server={dbHost}; port={dbPort}; database={dbName}; username={dbUser}; password={dbPassword}";
+        dbConnectionString =
+            $"server={Env.GetString("DB_HOST")};" +
+            $" port={Env.GetInt("DB_PORT")};" +
+            $" database={Env.GetString("DB_NAME")};" +
+            $" username={Env.GetString("DB_USER")};" +
+            $" password={Env.GetString("DB_PASSWORD")}";
     }
 
 
@@ -31,5 +25,12 @@ public static class DataBaseManager
         var dbIsOpen = sqlConnection.State == System.Data.ConnectionState.Open;
         sqlConnection.Close();
         return dbIsOpen;
+    }
+
+    private class DataBaseResponse(string response, string error, bool isSuccess)
+    {
+        public string Response { get; private set; } = response;
+        public string Error { get; private set; } = error;
+        public bool IsSuccess { get; private set; } = isSuccess;
     }
 }
