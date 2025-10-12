@@ -49,7 +49,7 @@ public class SessionInitializer
         }
 
         logger.LogInformation("Завершаем сессию для пользователя: {Username}", 
-            currentSession.User.Name);
+            currentSession.User.Username);
         
         currentSession.Deactivate();
         currentSession = null;
