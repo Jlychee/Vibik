@@ -45,7 +45,7 @@ public class SessionService : ISessionService
             // Создаем сессию с объектом пользователя
             var session = new Session(user, mapConfig);
             
-            logger.LogInformation("Сессия успешно инициализирована для пользователя: {Username}", user.Name);
+            logger.LogInformation("Сессия успешно инициализирована для пользователя: {Username}", user.Username);
             return session;
         }
         catch (Exception ex)

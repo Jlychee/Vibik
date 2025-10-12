@@ -39,7 +39,7 @@ public class UserRepository : IUserRepository
 
     public async Task<User> CreateAsync(User user)
     {
-        logger.LogInformation("Создаем пользователя в БД: {Username}", user.Name);
+        logger.LogInformation("Создаем пользователя в БД: {Username}", user.Username);
         
         try
         {
@@ -48,7 +48,7 @@ public class UserRepository : IUserRepository
             
             await Task.Delay(50); // Имитация сетевого запроса
             
-            logger.LogInformation("Пользователь {Username} успешно создан в БД", user.Name);
+            logger.LogInformation("Пользователь {Username} успешно создан в БД", user.Username);
             return user;
         }
         catch (Exception ex)
@@ -60,7 +60,7 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user)
     {
-        logger.LogInformation("Обновляем пользователя в БД: {Username}", user.Name);
+        logger.LogInformation("Обновляем пользователя в БД: {Username}", user.Username);
         
         try
         {
@@ -69,7 +69,7 @@ public class UserRepository : IUserRepository
             
             await Task.Delay(50); // Имитация сетевого запроса
             
-            logger.LogInformation("Пользователь {Username} успешно обновлен в БД", user.Name);
+            logger.LogInformation("Пользователь {Username} успешно обновлен в БД", user.Username);
         }
         catch (Exception ex)
         {

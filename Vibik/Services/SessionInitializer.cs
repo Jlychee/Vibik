@@ -30,7 +30,7 @@ public class SessionInitializer
         {
             currentSession = await sessionService.InitializeSessionAsync();
             logger.LogInformation("Сессия успешно запущена для пользователя: {Username}", 
-                currentSession.User.Name);
+                currentSession.User.Username);
             return currentSession;
         }
         catch (Exception ex)
