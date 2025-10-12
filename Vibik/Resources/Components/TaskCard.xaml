@@ -5,53 +5,56 @@
              x:Class="Vibik.Resources.Components.TaskCard"
              x:Name="Root"
              x:DataType="components:TaskCard">
-    
-    <Frame BackgroundColor="{DynamicResource MilkChocolate}"
+
+    <Frame BackgroundColor="{StaticResource MilkChocolate}"
            Padding="16"
            CornerRadius="11"
-           HasShadow="True">
+           HasShadow="False"
+           HorizontalOptions="FillAndExpand">
+
         <Grid ColumnDefinitions="Auto,*,Auto"
               RowDefinitions="Auto,Auto"
               ColumnSpacing="14"
               RowSpacing="8">
-            <!-- Левая иконка (рамка + кружок) -->
-            <Grid Grid.RowSpan="2" Grid.Column="0" WidthRequest="48" HeightRequest="48">
-                <Border Stroke="{StaticResource MilkChocolate}"
-                        StrokeThickness="2"
-                        StrokeShape="RoundRectangle 12"
-                        Background="Transparent" />
-                <Ellipse Stroke="{StaticResource MilkChocolate}"
-                         StrokeThickness="2"
-                         WidthRequest="16"
-                         HeightRequest="16"
-                         HorizontalOptions="Center"
-                         VerticalOptions="Center" />
-            </Grid>
 
-            <!-- Контент слева -->
+            <!-- Иконка слева (типа камера) -->
+            <Image Grid.RowSpan="2" Grid.Column="0"
+                   WidthRequest="48" HeightRequest="48"
+                   Aspect="AspectFit"
+                   Source="{Binding IconSource, TargetNullValue=default_task_photo.png}" />
+
+            <!-- Заголовок и строчка «со старта прошло» -->
             <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="4">
                 <Label Text="{Binding Title}"
-                       FontSize="18" FontAttributes="Bold"
-                       TextColor="{DynamicResource White}" />
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource White}" />
                 <Label Text="{Binding DaysPassedText}"
-                       FontSize="12"
-                       TextColor="{DynamicResource White}" />
+                       FontSize="14"
+                       TextColor="{StaticResource White}" />
             </VerticalStackLayout>
 
+            <!-- Стоимость -->
             <Label Grid.Column="1" Grid.Row="1"
                    Text="{Binding CostText}"
-                   FontSize="12"
-                   TextColor="{DynamicResource White}" />
+                   FontSize="14"
+                   TextColor="{StaticResource White}" />
 
-            <VerticalStackLayout Grid.Column="2" Grid.RowSpan="2" Spacing="2" HorizontalOptions="End">
-                <Label Text="⟳" FontSize="24" TextColor="{Binding CoinsColor}">
+            <!-- Кнопка «свап» и монеты справа -->
+            <VerticalStackLayout Grid.Column="2" Grid.RowSpan="2"
+                                 Spacing="2"
+                                 HorizontalOptions="End"
+                                 VerticalOptions="Center">
+                <Label Text="⟳"
+                       FontSize="24"
+                       TextColor="{Binding CoinsColor}">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding RefreshCommand}" />
                     </Label.GestureRecognizers>
                 </Label>
 
                 <Label Text="{Binding AvailableCoinsText}"
-                       FontSize="12"
+                       FontSize="14"
                        HorizontalTextAlignment="End"
                        TextColor="{Binding CoinsColor}" />
             </VerticalStackLayout>

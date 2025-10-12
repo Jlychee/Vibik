@@ -5,48 +5,138 @@
 
     <Grid BackgroundColor="{StaticResource NavySeal}">
         <ScrollView>
-            <StackLayout x:Name="CardsHost"
-                         Orientation="Vertical"
-                         Spacing="12"
-                         Padding="16,16,16,100" />
+            <VerticalStackLayout x:Name="PageStack"
+                                 Spacing="18"
+                                 Padding="16,16,16,100">
 
+                <!-- Верхние иконки: Level слева, монеты справа -->
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Start">
+                    <Frame Grid.Column="0"
+                           Padding="10,6"
+                           CornerRadius="22"
+                           BackgroundColor="{StaticResource LightYelloww}"
+                           HasShadow="False">
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Image Source="level.png"
+                                   WidthRequest="24"
+                                   HeightRequest="24"
+                                   Aspect="AspectFit"/>
+                            <Label Text="Level" FontSize="20" TextColor="{StaticResource TextBrown}" />
+                            <Label Text="{Binding Level}" FontSize="20" TextColor="{StaticResource TextBrown}" />
+                        </HorizontalStackLayout>
+                    </Frame>
+
+                    <Frame Grid.Column="2"
+                           Padding="14,6"
+                           CornerRadius="22"
+                           BackgroundColor="{StaticResource LightYelloww}"
+                           HasShadow="False"
+                           HorizontalOptions="End">
+                        <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                            <Label Text="{Binding Coins}" FontSize="20" TextColor="{StaticResource TextBrown}" />
+                            <Image Source="money.png"
+                                   WidthRequest="24"
+                                   HeightRequest="24"
+                                   Aspect="AspectFit"/>
+                        </HorizontalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <!-- Блок погоды -->
+                <Frame BackgroundColor="{StaticResource SteelTeal}"
+                       CornerRadius="11"
+                       Padding="16"
+                       HasShadow="False">
+                    <!-- картинка слева, справа текст -->
+                    <Grid ColumnDefinitions="112,Auto,1*"
+                          ColumnSpacing="14">
+                        <Image Grid.Column="0"
+                               Source="{Binding WeatherImage, TargetNullValue=cloudy_weather.png}"
+                               HorizontalOptions="Start"
+                               VerticalOptions="Center"
+                               WidthRequest="112"
+                               HeightRequest="62"
+                               Aspect="AspectFit"
+                               InputTransparent="True"/>
+
+                        <!-- Температура -->
+                        <Label Grid.Column="1"
+                               Text="{Binding WeatherTemp}"
+                               FontSize="32"
+                               TextColor="White"
+                               VerticalTextAlignment="Center"/>
+
+                        <!-- Описание неба и осадков -->
+                        <VerticalStackLayout Grid.Column="2" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding WeatherInfoAboutSky}"
+                                   FontSize="12"
+                                   TextColor="White" />
+                            <Label Text="{Binding WeatherInfoAboutFallout}"
+                                   FontSize="12"
+                                   TextColor="White" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Frame>
+
+                <!-- Заголовок раздела -->
+                <Label Text="МОИ ЗАДАНИЯ"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       TextColor="Black"
+                       Margin="0,8,0,0"/>
+
+                <!-- Тумблер "показать выполненные" -->
+                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           VerticalOptions="Center"
+                           Text="Показать выполненные задания"
+                           FontSize="18"
+                           TextColor="Black"/>
+                    <Switch Grid.Column="1"
+                            VerticalOptions="Center"
+                            IsToggled="{Binding ShowCompleted}"
+                            ThumbColor="{StaticResource MilkChocolate}"
+                            OnColor="{StaticResource LightYelloww}"/>
+                </Grid>
+
+                <!-- Хост карточек -->
+                <StackLayout x:Name="CardsHost"
+                             Orientation="Vertical"
+                             Spacing="12"
+                             Padding="0"
+                             HorizontalOptions="FillAndExpand" />
+            </VerticalStackLayout>
         </ScrollView>
 
-        <Frame
-            BackgroundColor="{StaticResource LightYelloww}"
-            Padding="0"
-            HasShadow="False"
-            CornerRadius="0,0,0,0"
-            VerticalOptions="End"
-            HorizontalOptions="Fill"
-            HeightRequest="70">
-        
-            <Grid ColumnDefinitions="*,*,*">
-                <ImageButton
-                    Grid.Column="1"
-                    Source="map_icon.png"
-                    BackgroundColor="Transparent"
-                    HeightRequest="32"
-                    WidthRequest="32"
-                    Clicked="OnMapClicked"/>
-                
-                <ImageButton
-                    Grid.Column="0"
-                    Source="home_icon.png"
-                    BackgroundColor="Transparent"
-                    HeightRequest="32"
-                    WidthRequest="32"
-                    Clicked="OnHomeClicked"/>
-                
-                <ImageButton
-                    Grid.Column="2"
-                    Source="profile_icon.png"
-                    BackgroundColor="Transparent"
-                    HeightRequest="32"
-                    WidthRequest="32"
-                    Clicked="OnProfileClicked"/>
+        <!-- навигация -->
+        <Frame BackgroundColor="{StaticResource LightYelloww}"
+               Padding="0"
+               HasShadow="False"
+               CornerRadius="0"
+               VerticalOptions="End"
+               HorizontalOptions="Fill"
+               HeightRequest="70">
+            <Grid ColumnDefinitions="*,*,*"
+                  HorizontalOptions="FillAndExpand">
+                <ImageButton Grid.Column="0"
+                             Source="home_icon.png"
+                             BackgroundColor="Transparent"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnHomeClicked"/>
+                <ImageButton Grid.Column="1"
+                             Source="map_icon.png"
+                             BackgroundColor="Transparent"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnMapClicked"/>
+                <ImageButton Grid.Column="2"
+                             Source="profile_icon.png"
+                             BackgroundColor="Transparent"
+                             HeightRequest="32"
+                             WidthRequest="32"
+                             Clicked="OnProfileClicked"/>
             </Grid>
         </Frame>
     </Grid>
-
 </ContentPage>
