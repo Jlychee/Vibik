@@ -1,19 +1,18 @@
 using Microsoft.Extensions.Logging;
 using Vibik.Core.Application.Interfaces;
 using Vibik.Core.Domain;
-
 namespace Vibik.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
     private readonly ILogger<UserRepository> logger;
-    private readonly HttpClient httpClient;
+    //private readonly IUserTable userTable;
 
-    public UserRepository(ILogger<UserRepository> logger, HttpClient httpClient)
-    {
-        this.logger = logger;
-        this.httpClient = httpClient;
-    }
+    // public UserRepository(ILogger<UserRepository> logger, IUserTable userTable)
+    // {
+    //     this.logger = logger;
+    //     this.userTable = userTable;
+    // }
 
     public async Task<User?> GetByUsernameAsync(string username)
     {
