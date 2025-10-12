@@ -8,3 +8,4 @@ public interface IMapInitializationService
     Task<MapConfiguration> LoadMapConfigurationAsync();
     Task SaveMapConfigurationAsync(MapConfiguration config);
 }
+

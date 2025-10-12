@@ -5,3 +5,4 @@ public record UserSession(
     DateTime CreatedAt,
     bool IsActive
 );
+

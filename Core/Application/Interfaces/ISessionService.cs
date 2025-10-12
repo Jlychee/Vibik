@@ -8,3 +8,4 @@ public interface ISessionService
     Task<User?> ValidateUserAsync(string username, string password);
     Task<MapConfiguration> InitializeMapAsync();
 }
+
