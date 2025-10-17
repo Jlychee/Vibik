@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Vibik.Core.Domain;
 
 namespace Vibik.Resources.Components;
 
@@ -111,5 +112,23 @@ public partial class TaskCard
         if (Application.Current?.Resources.TryGetValue(key, out var v) == true && v is Color c)
             return c;
         return fallback;
+    }
+
+    public static readonly BindableProperty ItemProperty =
+        BindableProperty.Create(nameof(Item), typeof(TaskItem), typeof(TaskCard));
+
+    public TaskItem? Item
+    {
+        get => (TaskItem?)GetValue(ItemProperty);
+        set => SetValue(ItemProperty, value);
+    }
+
+    private async void OnCardTapped(object? sender, TappedEventArgs e)
+    {
+        var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as TaskItem;
+        var item = fromGesture ?? Item;
+        if (item is null) return;
+
+        await Navigation.PushAsync(new TaskDetailsPage(item));
     }
 }

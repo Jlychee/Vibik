@@ -11,7 +11,10 @@
            CornerRadius="11"
            HasShadow="False"
            HorizontalOptions="FillAndExpand">
-
+        <Frame.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnCardTapped"
+                                  CommandParameter="{Binding Item, Source={x:Reference Root}}" />
+        </Frame.GestureRecognizers>
         <Grid ColumnDefinitions="Auto,*,Auto"
               RowDefinitions="Auto,Auto"
               ColumnSpacing="14"

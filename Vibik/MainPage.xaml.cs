@@ -72,28 +72,41 @@ public partial class MainPage
         // #ЗАГЛУШКА: забирать задания из БД
         var tasks = new[]
         {
-            new TaskToDo("Медовые шесть",     0, 15,  5,  "default_task_photo.png"),
-            new TaskToDo("Лесной сбор",       3, 20, 12,  "default_task_photo.png"),
-            new TaskToDo("Тыквенный пряник",  7, 30, 35,  "default_task_photo.png"),
-            new TaskToDo("Семена акации",     1, 10,  8,  "default_task_photo.png"),
+            new { Title = "Медовые шесть",    Days = 0, Cost = 15, Swap =  5, Icon = "default_task_photo.png" },
+            new { Title = "Лесной сбор",      Days = 3, Cost = 20, Swap = 12, Icon = "default_task_photo.png" },
+            new { Title = "Тыквенный пряник", Days = 7, Cost = 30, Swap = 35, Icon = "default_task_photo.png" },
+            new { Title = "Семена акации",    Days = 1, Cost = 10, Swap =  8, Icon = "default_task_photo.png" },
         };
 
         CardsHost.Children.Clear();
 
         foreach (var task in tasks)
         {
+            var item = new Vibik.Core.Domain.TaskItem
+            {
+                OwnerName = "Vibik",
+                Title = task.Title,
+                TaskName = task.Title,
+                Description = "Заглушка описания",
+                PathToExampleCollage = "example_collage.png"
+            };
+            item.SetDayPassed(task.Days);
+            item.SetAward(task.Cost);
+            item.SetSwapCost(task.Swap);
+            item.SetRequiredPhotoCount(1);
             var card = new TaskCard
             {
-                Title = task.Title,
-                DaysPassed = task.Days,
-                Cost = task.Cost,
-                SwapCost = task.AvailableCoins,
+                Item = item,
+                Title = item.TaskName,
+                DaysPassed = item.DayPassed,
+                Cost = item.Award,
+                SwapCost = item.SwapCost,
                 RefreshCommand = new Command(() =>
-                    DisplayAlert("Обновление", $"Обновить: {task.Title}", "OK"))
+                    DisplayAlert("Смена задания", $"Заменить: {task.Title}", "OK"))
             };
             card.HorizontalOptions = LayoutOptions.Fill;
-            if (!string.IsNullOrWhiteSpace(task.IconFile))
-                card.IconSource = ImageSource.FromFile(task.IconFile);
+            if (!string.IsNullOrWhiteSpace(task.Icon))
+                card.IconSource = ImageSource.FromFile(task.Icon);
 
             CardsHost.Children.Add(card);
         }
@@ -104,9 +117,7 @@ public partial class MainPage
         // TODO: сюда — логика показа/скрытия выполненных заданий
         // пример: проходишься по CardsHost.Children и меняешь IsVisible у карточек
     }
-
-    private record TaskToDo(string Title, int Days, int Cost, int AvailableCoins, string? IconFile);
-
+    
     private async void OnMapClicked(object sender, EventArgs e)
     {
         await Navigation.PushAsync(new Map());
