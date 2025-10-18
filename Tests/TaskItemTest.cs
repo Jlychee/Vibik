@@ -12,7 +12,7 @@ public class TaskItemTest
         {
             OwnerName = "бобик",
             Title = "take the photo of the sunset",
-            TaskName = "Сфоткать закат"
+            DisplayName = "Сфоткать закат"
         };
         
         Assert.That(task.IsCompleted, Is.False);
@@ -55,13 +55,13 @@ public class TaskItemTest
         {
             OwnerName = "бобик",
             Title = "task1",
-            TaskName = "Сфоткала?"
+            DisplayName = "Сфоткала?"
         };
 
         Assert.Multiple(() =>
         {
             Assert.That(t.Title, Is.EqualTo("task1"));
-            Assert.That(t.TaskName, Is.EqualTo("Сфоткала?"));
+            Assert.That(t.DisplayName, Is.EqualTo("Сфоткала?"));
         });
     }
 }
