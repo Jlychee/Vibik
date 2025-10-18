@@ -104,7 +104,7 @@
                              Orientation="Vertical"
                              Spacing="12"
                              Padding="0"
-                             HorizontalOptions="FillAndExpand" />
+                             HorizontalOptions="FillAndExpand"/>
             </VerticalStackLayout>
         </ScrollView>
 

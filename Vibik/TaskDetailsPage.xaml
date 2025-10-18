@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Vibik.TaskDetailsPage">
+    <ScrollView>
+        <VerticalStackLayout Spacing="18" Padding="16">
+            <Frame BackgroundColor="{StaticResource MilkChocolate}"
+                   CornerRadius="11"
+                   Padding="0"
+                   HasShadow="True">
+                <Grid RowDefinitions="Auto,Auto">
+                    <!-- верхний элемент с заголовком -->
+                    <Grid BackgroundColor="{StaticResource MilkChocolate}" Padding="16">
+                        <Label Text="{Binding TaskName}"
+                               FontSize="32"
+                               TextColor="{StaticResource LightYelloww}"
+                               FontAttributes="Bold"/>
+                    </Grid>
+                    
+                    <!-- описание + сетка для фоток -->
+                    <Grid BackgroundColor="{StaticResource NavySeal}" Padding="16,24,16,24" Row="1">
+                        <VerticalStackLayout Spacing="24">
+                            <!-- descriprion -->
+                            <Label Text="{Binding Description}"
+                                   FontSize="28"
+                                   TextColor="Black"/>
+                            <!-- сетка для фоток(горизонтальный скролл -->
+                            <ScrollView Orientation="Horizontal">
+                                <Grid x:Name="PhotoShotsGrid"
+                                      ColumnSpacing="24"
+                                      RowSpacing="24"/>
+                            </ScrollView>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Grid>
+            </Frame>
+            
+            <!-- пример -->
+            <Label Text="Пример" FontSize="36" TextColor="Black"/>
+            <Image Source="{Binding ExampleCollage, TargetNullValue=example_collage.png}" 
+                HeightRequest="100"
+                WidthRequest="100"
+                Aspect="AspectFit"/>
+            
+            <!-- кнопка сдать задание -->
+            <Button
+                Text="Отправить задание"
+                Clicked="OnSendClick"
+                CornerRadius="16"
+                HeightRequest="56"
+                FontSize="18"
+                BackgroundColor="{StaticResource MilkChocolate}"
+                TextColor="{StaticResource LightYelloww}"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
