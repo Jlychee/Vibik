@@ -1,5 +1,6 @@
-using System.Text.RegularExpressions;
-using Vibik.Core.Domain;
+using Shared.Models;
+using Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace Vibik;
 
@@ -7,9 +8,11 @@ public partial class TaskDetailsPage
 {
     private const int TileSize = 120;
 
-    private readonly TaskItem task;
+    private readonly Shared.Models.Task task;
 
-    public TaskDetailsPage(TaskItem task)
+    private TaskExtendedInfo ExtendedInfo => task.ExtendedInfo;
+
+    public TaskDetailsPage(Shared.Models.Task task)
     {
         InitializeComponent();
         this.task = task ?? throw new ArgumentNullException(nameof(task));
@@ -19,116 +22,148 @@ public partial class TaskDetailsPage
 
     private async void OnSendClick(object? sender, EventArgs e)
     {
-        if (task.RequiredPhotoCount > 0 && task.PhotoPaths.Count < task.RequiredPhotoCount)
+        var required = ExtendedInfo.PhotosRequired;
+        var count = ExtendedInfo.UserPhotos.Count;
+
+        if (required > 0 && count < required)
         {
             await DisplayAlert("Недостаточно фото",
-                $"Нужно минимум {task.RequiredPhotoCount}. Сейчас: {task.PhotoPaths.Count}.", "OK");
+                $"Нужно минимум {required}. Сейчас: {count}.", "OK");
             return;
         }
 
-        // #ЗАГЛУШКА: отправлять в тгбот и все такое
+        // #ЗАГЛУШКА: здесь будет реальная отправка
         await DisplayAlert("Готово", "Задание отправлено (заглушка).", "OK");
     }
 
-    
+    private const int Columns = 3;
+    private const double CellGap = 24;
+
     private void BuildPhotosGrid()
     {
         PhotoShotsGrid.Children.Clear();
         PhotoShotsGrid.ColumnDefinitions.Clear();
         PhotoShotsGrid.RowDefinitions.Clear();
+
+        for (var c = 0; c < Columns; c++)
+            PhotoShotsGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+
         PhotoShotsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        var paths = task.PhotoPaths ?? new List<string>();
-        var col = 0;
+        PhotoShotsGrid.ColumnSpacing = CellGap;
+        PhotoShotsGrid.RowSpacing = CellGap;
+        
+        PhotoShotsGrid.HorizontalOptions = LayoutOptions.Center;
+        PhotoShotsGrid.WidthRequest = Columns * TileSize + (Columns - 1) * CellGap;
 
-        foreach (var path in paths)
+
+        var paths = ExtendedInfo.UserPhotos
+            .Select(p => p.Url)
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .ToList();
+
+        var required = ExtendedInfo.PhotosRequired;
+        var totalSlots = required > 0 ? required : Math.Max(paths.Count + 1, 1);
+
+        var rows = (int)Math.Ceiling(totalSlots / (double)Columns);
+        for (var r = 0; r < rows; r++)
+            PhotoShotsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+        var i = 0;
+
+        foreach (var path in paths.Take(totalSlots))
+            AddPhotoTile(path, i++);
+
+        for (; i < totalSlots; i++)
+            AddAddTile(i);
+    }
+
+    private void AddPhotoTile(string path, int index)
+    {
+        var r = index / Columns;
+        var c = index % Columns;
+
+        var tile = new Resources.Components.PhotoTile
         {
-            PhotoShotsGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-            var tile = CreatePhotoTile(path);
-            Grid.SetRow(tile, 0);
-            Grid.SetColumn(tile, col++);
-            PhotoShotsGrid.Children.Add(tile);
-        }
+            PathOrUrl = path,
+            TileSize = TileSize,
+            IsAddTile = false
+        };
+        tile.PhotoTapped += async (_, p) =>
+        {
+            if (!string.IsNullOrWhiteSpace(p))
+                await OnPhotoTappedCore(p);
+        };
 
-        if (task.RequiredPhotoCount > 0 && paths.Count >= task.RequiredPhotoCount) return;
-        PhotoShotsGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-        var add = CreateAddTile();
-        Grid.SetRow(add, 0);
-        Grid.SetColumn(add, col);
+        Grid.SetRow(tile, r);
+        Grid.SetColumn(tile, c);
+        PhotoShotsGrid.Children.Add(tile);
+    }
+
+    private void AddAddTile(int index)
+    {
+        var r = index / Columns;
+        var c = index % Columns;
+
+        var add = new Resources.Components.PhotoTile
+        {
+            IsAddTile = true,
+            TileSize = TileSize
+        };
+        add.AddTapped += OnAddPhotoTapped;
+
+        Grid.SetRow(add, r);
+        Grid.SetColumn(add, c);
         PhotoShotsGrid.Children.Add(add);
     }
-
-    private View CreatePhotoTile(string path)
+    
+    private async Task OnPhotoTappedCore(string path)
     {
-        var image = new Image
+        var choice = await DisplayActionSheet("Фото", "Отмена", null, "Просмотреть", "Заменить", "Удалить");
+        if (string.IsNullOrEmpty(choice) || choice == "Отмена") return;
+        switch (choice)
         {
-            Source = File.Exists(path) ? ImageSource.FromFile(path) : "example_collage.png",
-            WidthRequest = TileSize,
-            HeightRequest = TileSize,
-            Aspect = Aspect.AspectFill
-        };
+            case "Просмотреть":
+                await ShowPreviewAsync(path);
+                break;
 
-        var frame = new Frame
-        {
-            Content = image,
-            Padding = 0,
-            CornerRadius = 12,
-            HasShadow = true,
-            BackgroundColor = Colors.Transparent,
-            Margin = new Thickness(0, 0, 24, 0),
-            BindingContext = path
-        };
+            case "Заменить":
+            {
+                var newFile = await PhotoService.PickOrCaptureAsync(this);
+                if (newFile == null) return;
 
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += OnPhotoTapped;
-        frame.GestureRecognizers.Add(tap);
+                var newPath = await PhotoService.SaveFileResultAsync(newFile, TaskKey);
+                var idx = ExtendedInfo.UserPhotos.FindIndex(p => p.Url == path);
+                if (idx >= 0)
+                {
+                    if (File.Exists(ExtendedInfo.UserPhotos[idx].Url))
+                        try
+                        {
+                            File.Delete(ExtendedInfo.UserPhotos[idx].Url);
+                        }
+                        catch
+                        {
+                            await DisplayAlert("Ошибка", "при удалении фото", "Понятно");
+                        }
 
-        return frame;
-    }
+                    ExtendedInfo.UserPhotos[idx] = new PhotoModel { Url = newPath };
+                    BuildPhotosGrid();
+                }
+                break;
+            }
 
-    private View CreateAddTile()
-    {
-        var plus = new Label
-        {
-            Text = "＋",
-            FontSize = 48,
-            HorizontalTextAlignment = TextAlignment.Center,
-            VerticalTextAlignment = TextAlignment.Center
-        };
+            case "Удалить":
+            {
+                var ok = await DisplayAlert("Удалить фото?", "Это действие необратимо.", "Удалить", "Отмена");
+                if (!ok) return;
 
-        var caption = new Label
-        {
-            Text = "Добавить",
-            FontSize = 12,
-            HorizontalTextAlignment = TextAlignment.Center
-        };
-
-        var stack = new VerticalStackLayout
-        {
-            Spacing = 6,
-            HorizontalOptions = LayoutOptions.Center,
-            VerticalOptions = LayoutOptions.Center,
-            Children = { plus, caption }
-        };
-
-        var frame = new Frame
-        {
-            Content = stack,
-            WidthRequest = TileSize,
-            HeightRequest = TileSize,
-            Padding = 0,
-            CornerRadius = 12,
-            HasShadow = true,
-            BorderColor = Colors.Gray,
-            BackgroundColor = Colors.Transparent,
-            Margin = new Thickness(0, 0, 24, 0)
-        };
-
-        var tap = new TapGestureRecognizer();
-        tap.Tapped += OnAddPhotoTapped;
-        frame.GestureRecognizers.Add(tap);
-
-        return frame;
+                var removed = ExtendedInfo.UserPhotos.RemoveAll(p => p.Url == path) > 0;
+                if (removed && File.Exists(path))
+                    try { File.Delete(path); } catch { }
+                BuildPhotosGrid();
+                break;
+            }
+        }
     }
 
 
@@ -136,17 +171,19 @@ public partial class TaskDetailsPage
     {
         try
         {
-            if (task.RequiredPhotoCount > 0 && task.PhotoPaths.Count >= task.RequiredPhotoCount)
+            var current = ExtendedInfo.UserPhotos?.Count ?? 0;
+            if (ExtendedInfo.PhotosRequired > 0 && current >= ExtendedInfo.PhotosRequired)
             {
                 await DisplayAlert("Лимит", "Достигнуто максимальное количество фото.", "OK");
                 return;
             }
 
-            var file = await PickOrCapturePhotoAsync();
+            var file = await PhotoService.PickOrCaptureAsync(this);
             if (file == null) return;
 
-            var savedPath = await SaveFileResultAsync(file, TaskKey);
-            task.AddPhotoPath(savedPath);
+            var savedPath = await PhotoService.SaveFileResultAsync(file, TaskKey);
+
+            ExtendedInfo.UserPhotos!.Add(new PhotoModel { Url = savedPath });
             BuildPhotosGrid();
         }
         catch (FeatureNotSupportedException)
@@ -162,115 +199,27 @@ public partial class TaskDetailsPage
             await DisplayAlert("Ошибка", ex.Message, "OK");
         }
     }
-
-    private async void OnPhotoTapped(object? sender, EventArgs e)
-    {
-        if (sender is not Frame frame || frame.BindingContext is not string path) return;
-
-        var choice = await DisplayActionSheet("Фото", "Отмена", null, "Просмотреть", "Заменить", "Удалить");
-        if (string.IsNullOrEmpty(choice) || choice == "Отмена") return;
-
-        try
-        {
-            if (choice == "Просмотреть")
-            {
-                await ShowPreviewAsync(path);
-            }
-            else if (choice == "Заменить")
-            {
-                var newFile = await PickOrCapturePhotoAsync();
-                if (newFile == null) return;
-
-                var newPath = await SaveFileResultAsync(newFile, TaskKey);
-                if (task.ReplacePhotoPath(path, newPath) && File.Exists(path))
-                {
-                    try { File.Delete(path); } catch { /* ignore */ }
-                }
-                BuildPhotosGrid();
-            }
-            else if (choice == "Удалить")
-            {
-                var ok = await DisplayAlert("Удалить фото?", "Это действие необратимо.", "Удалить", "Отмена");
-                if (!ok) return;
-
-                if (task.RemovePhotoPath(path) && File.Exists(path))
-                {
-                    try { File.Delete(path); } catch { /* ignore */ }
-                }
-                BuildPhotosGrid();
-            }
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Ошибка", ex.Message, "OK");
-        }
-    }
     
-    private async Task<FileResult?> PickOrCapturePhotoAsync()
-    {
-        var action = await DisplayActionSheet("Добавить фото", "Отмена", null, "Сделать фото", "Выбрать из галереи");
-        if (string.IsNullOrEmpty(action) || action == "Отмена") return null;
-
-        if (action == "Сделать фото")
-        {
-            if (!await EnsurePermission<Permissions.Camera>())
-            {
-                await DisplayAlert("Нет доступа", "Разрешите доступ к камере.", "OK");
-                return null;
-            }
-            return await MediaPicker.Default.CapturePhotoAsync(new MediaPickerOptions
-            {
-                Title = $"task_{TaskKey}_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
-            });
-        }
-
-        _ = await EnsurePermission<Permissions.Photos>();
-        return await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions { Title = "Выберите фото" });
-    }
-
-    private static async Task<string> SaveFileResultAsync(FileResult file, string taskKey)
-    {
-        var ext = Path.GetExtension(file.FileName);
-        if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
-
-        var dir = Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
-        Directory.CreateDirectory(dir);
-
-        var name = $"photo_{DateTime.Now:yyyyMMdd_HHmmssfff}{ext}";
-        var dst = Path.Combine(dir, name);
-
-        await using var srcStream = await file.OpenReadAsync();
-        await using var dstStream = File.Create(dst);
-        await srcStream.CopyToAsync(dstStream);
-
-        return dst;
-    }
-
     private string TaskKey =>
-        Slug($"{task.OwnerName}_{task.TaskName}".Trim().Length > 0
-            ? $"{task.OwnerName}_{task.TaskName}"
-            : (!string.IsNullOrWhiteSpace(task.Title) ? task.Title : "task"));
+        !string.IsNullOrWhiteSpace(task.TaskId)
+            ? task.TaskId
+            : PhotoService.Slug(string.IsNullOrWhiteSpace(task.Name) ? "task" : task.Name);
 
-    private static string Slug(string s)
+    
+    private async Task ShowPreviewAsync(string pathOrUrl)
     {
-        s = (s ?? string.Empty).ToLowerInvariant();
-        s = Regex.Replace(s, @"\s+", "-");
-        s = Regex.Replace(s, @"[^a-z0-9\-_]+", "_");
-        return s.Trim('_', '-');
-    }
+        var img = new Image
+        {
+            Source = ImageSourceFinder.ResolveImage(pathOrUrl),
+            Aspect = Aspect.AspectFit
+        };
 
-    private static async Task<bool> EnsurePermission<T>() where T : Permissions.BasePermission, new()
-    {
-        var status = await Permissions.CheckStatusAsync<T>();
-        if (status != PermissionStatus.Granted)
-            status = await Permissions.RequestAsync<T>();
-        return status == PermissionStatus.Granted;
-    }
-
-    private async Task ShowPreviewAsync(string path)
-    {
-        var img = new Image { Source = ImageSource.FromFile(path), Aspect = Aspect.AspectFit };
-        var close = new Button { Text = "Закрыть", HorizontalOptions = LayoutOptions.End, Margin = new Thickness(0, 12, 12, 0) };
+        var close = new Button
+        {
+            Text = "Закрыть",
+            HorizontalOptions = LayoutOptions.End,
+            Margin = new Thickness(0, 12, 12, 0)
+        };
 
         var grid = new Grid();
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -283,23 +232,5 @@ public partial class TaskDetailsPage
         close.Clicked += (_, __) => Navigation.PopModalAsync();
         await Navigation.PushModalAsync(page, true);
     }
-
-    private sealed class ViewModel
-    {
-        public string TaskName { get; }
-        public string Description { get; }
-        public ImageSource ExampleCollage { get; }
-
-        public ViewModel(TaskItem task)
-        {
-            TaskName = string.IsNullOrWhiteSpace(task.TaskName) ? task.Title : task.TaskName;
-            Description = task.Description ?? string.Empty;
-
-            ExampleCollage = (!string.IsNullOrWhiteSpace(task.PathToExampleCollage) &&
-                              File.Exists(task.PathToExampleCollage))
-                ? ImageSource.FromFile(task.PathToExampleCollage)
-                : ImageSource.FromFile("example_collage.png");
-        }
-    }
+    
 }
-

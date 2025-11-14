@@ -1,53 +1,54 @@
 ﻿using Vibik.Resources.Components;
+using Vibik.Services;
+using TaskModel = Shared.Models.Task;
 
 namespace Vibik;
 
 public partial class MainPage
 {
+    private readonly ITaskApi taskApi;
+    private readonly List<TaskModel> allTasks = [];
+
     private int level;
-    private int coins;
-    private bool showCompleted;
+    private int experience;
     private ImageSource? weatherImage;
 
-    public ImageSource? WeatherImage
-    {
-        get => weatherImage;
-        set { if (weatherImage == value) return; weatherImage = value; OnPropertyChanged(nameof(WeatherImage)); }
+    public ImageSource? WeatherImage { get => weatherImage; set { weatherImage = value; OnPropertyChanged(); } }
+    public int Level { get => level; set { level = value; OnPropertyChanged(); } }
+    public int Experience { get => experience; set { experience = value; OnPropertyChanged(); } }
 
-    }
-
-    public int Level
-    {
-        get => level;
-        set { if (level == value) return; level = value; OnPropertyChanged(nameof(Level)); }
-    }
-
-    public int Coins
-    {
-        get => coins;
-        set { if (coins == value) return; coins = value; OnPropertyChanged(nameof(Coins)); }
-    }
-
+    private bool showCompleted;
     public bool ShowCompleted
     {
         get => showCompleted;
-        set { if (showCompleted == value) return; showCompleted = value; OnPropertyChanged(nameof(ShowCompleted)); ApplyFilter(); }
+        set
+        {
+            if (showCompleted == value) return;
+            showCompleted = value;
+            OnPropertyChanged();
+            ApplyFilter();
+        }
     }
 
     // #ЗАГЛУШКА: вытаскивать из погодного апи
-    public string WeatherTemp  => "25°";
+    public string WeatherTemp => "25°";
     public string WeatherInfoAboutSky => "Облачно";
     public string WeatherInfoAboutFallout => "Осадков не ожидается";
 
-    public MainPage()
+    public MainPage() : this(TaskApi.Create("https://localhost:5001/", useStub: true)) { }
+
+    private MainPage(ITaskApi taskApi)
     {
         InitializeComponent();
         BindingContext = this;
+        this.taskApi = taskApi;
+
         Level = GetUserLevel();
-        Coins = GetUserCoins();
+        Experience = GetUserExperience();
+
         WeatherImage = ImageSource.FromFile("cloudy_weather.png");
-        GenerateTaskCards();
     }
+
     // #ЗАГЛУШКА: маппинг погодного кода на картинку
     private void UpdateWeatherIcon(string condition)
     {
@@ -61,63 +62,65 @@ public partial class MainPage
             _ => null
         };
     }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await LoadTasksAsync();
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        try
+        {
+            var tasks = await taskApi.GetTasksAsync();
+            allTasks.Clear();
+            allTasks.AddRange(tasks);
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ошибка", $"Не удалось загрузить задания: {ex.Message}", "OK");
+        }
+    }
+
     // #ЗАГЛУШКА: вытаскивать из БД
     private int GetUserLevel() => 10;
-
     // #ЗАГЛУШКА: вытаскивать из БД
-    private int GetUserCoins() => 15;
-
-    private void GenerateTaskCards()
+    private int GetUserExperience() => 15;
+    
+    private void ApplyFilter()
     {
-        // #ЗАГЛУШКА: забирать задания из БД
-        var tasks = new[]
-        {
-            new { Title = "Медовые шесть",    Days = 0, Cost = 15, Swap =  5, Icon = "default_task_photo.png" },
-            new { Title = "Лесной сбор",      Days = 3, Cost = 20, Swap = 12, Icon = "default_task_photo.png" },
-            new { Title = "Тыквенный пряник", Days = 7, Cost = 30, Swap = 35, Icon = "default_task_photo.png" },
-            new { Title = "Семена акации",    Days = 1, Cost = 10, Swap =  8, Icon = "default_task_photo.png" },
-        };
+        IEnumerable<TaskModel> filtered = allTasks;
+
+        // Оставлено как задел на будущее — фильтр по выполненным
+        // if (!ShowCompleted) { ... }
 
         CardsHost.Children.Clear();
 
-        foreach (var task in tasks)
+        foreach (var task in filtered)
         {
-            var item = new Vibik.Core.Domain.TaskItem
-            {
-                OwnerName = "Vibik",
-                Title = task.Title,
-                TaskName = task.Title,
-                Description = "Заглушка описания",
-                PathToExampleCollage = "example_collage.png"
-            };
-            item.SetDayPassed(task.Days);
-            item.SetAward(task.Cost);
-            item.SetSwapCost(task.Swap);
-            item.SetRequiredPhotoCount(1);
             var card = new TaskCard
             {
-                Item = item,
-                Title = item.TaskName,
-                DaysPassed = item.DayPassed,
-                Cost = item.Award,
-                SwapCost = item.SwapCost,
+                TaskApi = taskApi,
+                Item = task,
+                Title = task.Name,
+                DaysPassed = task.DaysPassed(),
+                Cost = task.Reward,
+                SwapCost = task.Swap,
                 RefreshCommand = new Command(() =>
-                    DisplayAlert("Смена задания", $"Заменить: {task.Title}", "OK"))
+                    DisplayAlert("Смена задания", $"Заменить: {task.Name}", "OK")),
+                HorizontalOptions = LayoutOptions.Fill
             };
-            card.HorizontalOptions = LayoutOptions.Fill;
-            if (!string.IsNullOrWhiteSpace(task.Icon))
-                card.IconSource = ImageSource.FromFile(task.Icon);
+
+            // Если появится иконка у задач
+            // if (!string.IsNullOrWhiteSpace(task.Icon))
+            //     card.IconSource = ImageSource.FromFile(task.Icon);
 
             CardsHost.Children.Add(card);
         }
     }
 
-    private void ApplyFilter()
-    {
-        // TODO: сюда — логика показа/скрытия выполненных заданий
-        // пример: проходишься по CardsHost.Children и меняешь IsVisible у карточек
-    }
-    
     private async void OnMapClicked(object sender, EventArgs e)
     {
         await Navigation.PushAsync(new Map());

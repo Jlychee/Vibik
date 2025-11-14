@@ -1,3 +1,5 @@
+using Shared.Models;
+
 namespace Vibik.Core.Domain;
 
 public class Session
