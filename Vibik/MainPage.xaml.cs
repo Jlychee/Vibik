@@ -93,7 +93,7 @@ public partial class MainPage
     {
         IEnumerable<TaskModel> filtered = allTasks;
 
-        // Оставлено как задел на будущее — фильтр по выполненным
+        // заглушка фильтр по выполненным
         // if (!ShowCompleted) { ... }
 
         CardsHost.Children.Clear();
@@ -121,10 +121,10 @@ public partial class MainPage
         }
     }
 
-    private async void OnMapClicked(object sender, EventArgs e)
-    {
-        await Navigation.PushAsync(new Map());
-    }
+    // private async void OnMapClicked(object sender, EventArgs e)
+    // {
+    //     await Navigation.PushAsync(new Map());
+    // }
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
