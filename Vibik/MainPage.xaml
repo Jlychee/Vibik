@@ -128,7 +128,8 @@
                              Source="map_icon.png"
                              BackgroundColor="Transparent"
                              HeightRequest="32"
-                             WidthRequest="32"/>
+                             WidthRequest="32"
+                             Clicked="OnMapClicked"/>
                 <ImageButton Grid.Column="2"
                              Source="profile_icon.png"
                              BackgroundColor="Transparent"

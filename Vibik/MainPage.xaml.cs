@@ -121,10 +121,10 @@ public partial class MainPage
         }
     }
 
-    // private async void OnMapClicked(object sender, EventArgs e)
-    // {
-    //     await Navigation.PushAsync(new Map());
-    // }
+    private async void OnMapClicked(object sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new MapPage());
+    }
 
     private async void OnHomeClicked(object sender, EventArgs e)
     {
