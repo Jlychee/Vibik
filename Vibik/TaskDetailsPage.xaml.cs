@@ -16,7 +16,17 @@ public partial class TaskDetailsPage
     {
         InitializeComponent();
         this.task = task ?? throw new ArgumentNullException(nameof(task));
+        this.task.ExtendedInfo ??= new TaskExtendedInfo { UserPhotos = [] };
+        this.task.ExtendedInfo.UserPhotos ??= [];
         BindingContext = new ViewModel(this.task);
+        LoadSavedPhotos();
+        BuildPhotosGrid();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        LoadSavedPhotos();
         BuildPhotosGrid();
     }
 
@@ -76,6 +86,32 @@ public partial class TaskDetailsPage
 
         for (; i < totalSlots; i++)
             AddAddTile(i);
+    }
+    
+    private void LoadSavedPhotos()
+    {
+        var saved = PhotoService.GetSavedPhotos(TaskKey);
+
+        ExtendedInfo.UserPhotos.RemoveAll(p =>
+        {
+            if (string.IsNullOrWhiteSpace(p.Url)) return false;
+            if (Uri.TryCreate(p.Url, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                return false;
+
+            return !File.Exists(p.Url);
+        });
+
+        var existing = ExtendedInfo.UserPhotos
+            .Where(p => !string.IsNullOrWhiteSpace(p.Url))
+            .Select(p => p.Url)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var path in saved.Where(File.Exists))
+        {
+            if (existing.Add(path))
+                ExtendedInfo.UserPhotos.Add(new PhotoModel { Url = path });
+        }
     }
 
     private void AddPhotoTile(string path, int index)
@@ -165,7 +201,6 @@ public partial class TaskDetailsPage
             }
         }
     }
-
 
     private async void OnAddPhotoTapped(object? sender, EventArgs e)
     {

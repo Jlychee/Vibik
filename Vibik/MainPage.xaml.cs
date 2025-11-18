@@ -8,6 +8,8 @@ public partial class MainPage
 {
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
+    private readonly IUserApi userApi;
+    private readonly LoginPage loginPage;
 
     private int level;
     private int experience;
@@ -35,18 +37,16 @@ public partial class MainPage
     public string WeatherInfoAboutSky => "Облачно";
     public string WeatherInfoAboutFallout => "Осадков не ожидается";
 
-    public MainPage() : this(TaskApi.Create("https://localhost:5001/", useStub: true)) { }
+    //public MainPage() : this(TaskApi.Create("https://localhost:5001/", useStub: false)) { }
 
-    private MainPage(ITaskApi taskApi)
+    private MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage)
     {
         InitializeComponent();
         BindingContext = this;
         this.taskApi = taskApi;
-
-        Level = GetUserLevel();
-        Experience = GetUserExperience();
-
+        this.userApi = userApi;
         WeatherImage = ImageSource.FromFile("cloudy_weather.png");
+        this.loginPage = loginPage;
     }
 
     // #ЗАГЛУШКА: маппинг погодного кода на картинку
@@ -67,6 +67,31 @@ public partial class MainPage
     {
         base.OnAppearing();
         await LoadTasksAsync();
+        await LoadUserAsync();
+    }
+    
+    private async Task LoadUserAsync()
+    {
+        var userId = Preferences.Get("current_user", "");
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            await Navigation.PushModalAsync(new NavigationPage(loginPage));
+            return;
+        }
+
+        try
+        {
+            var user = await userApi.GetUserAsync(userId);
+            if (user != null)
+            {
+                Level = user.Level;
+                Experience = user.Experience;
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ошибка", $"Не удалось загрузить профиль: {ex.Message}", "OK");
+        }
     }
 
     private async Task LoadTasksAsync()
@@ -83,17 +108,12 @@ public partial class MainPage
             await DisplayAlert("Ошибка", $"Не удалось загрузить задания: {ex.Message}", "OK");
         }
     }
-
-    // #ЗАГЛУШКА: вытаскивать из БД
-    private int GetUserLevel() => 10;
-    // #ЗАГЛУШКА: вытаскивать из БД
-    private int GetUserExperience() => 15;
     
     private void ApplyFilter()
     {
         IEnumerable<TaskModel> filtered = allTasks;
 
-        // Оставлено как задел на будущее — фильтр по выполненным
+        //  фильтр по выполненным
         // if (!ShowCompleted) { ... }
 
         CardsHost.Children.Clear();

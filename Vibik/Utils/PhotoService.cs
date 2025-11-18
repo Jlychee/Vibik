@@ -47,7 +47,7 @@ public static class PhotoService
         var ext = Path.GetExtension(file.FileName);
         if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
 
-        var dir = Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
+        var dir = GetTaskDirectory(taskKey);
         Directory.CreateDirectory(dir);
 
         var name = $"photo_{DateTime.Now:yyyyMMdd_HHmmssfff}{ext}";
@@ -59,6 +59,19 @@ public static class PhotoService
 
         return dst;
     }
+    
+    public static IReadOnlyList<string> GetSavedPhotos(string taskKey)
+    {
+        var dir = GetTaskDirectory(taskKey);
+        if (!Directory.Exists(dir)) return Array.Empty<string>();
+
+        return Directory.GetFiles(dir)
+            .OrderBy(f => f)
+            .ToArray();
+    }
+
+    private static string GetTaskDirectory(string taskKey) =>
+        Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
 
 }
 

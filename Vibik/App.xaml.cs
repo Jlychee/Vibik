@@ -2,13 +2,20 @@
 
 public partial class App : Application
 {
-    public App()
+    private readonly LoginPage loginPage;
+    public App(LoginPage loginPage)
     {
         InitializeComponent();
+        this.loginPage = loginPage;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new AppShell());
+        var hasUser = Preferences.ContainsKey("current_user");
+        var startPage = hasUser
+            ? (Page)new AppShell()
+            : new NavigationPage(loginPage);
+
+        return new Window(startPage);
     }
 }
