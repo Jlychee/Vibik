@@ -1,15 +1,16 @@
 using System.Net.Http.Json;
+using Core.Application;
 using TaskModel = Shared.Models.Task;
 using Shared.Models;
 
-namespace Vibik.Services;
+namespace Infrastructure.Api;
 
-public sealed class TaskApi(HttpClient httpClient, bool useStub = false) : ITaskApi
+public sealed class TaskApi(HttpClient httpClient, bool useStub = true) : ITaskApi
 {
     public static TaskApi Create(string baseUrl, bool useStub = false, HttpMessageHandler? handler = null)
     {
         var client = handler is null ? new HttpClient() : new HttpClient(handler);
-        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+        client.BaseAddress = new Uri(baseUrl);
         return new TaskApi(client, useStub);
     }
 

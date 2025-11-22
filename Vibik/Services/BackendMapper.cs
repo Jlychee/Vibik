@@ -1,6 +1,6 @@
 using TaskModel = Shared.Models.Task;
 
-namespace Vibik.Services;
+namespace Infrastructure.Api;
 
 public static class BackendMapper
 {

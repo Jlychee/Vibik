@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Api\" />
       <Folder Include="Repositories\" />
     </ItemGroup>
 

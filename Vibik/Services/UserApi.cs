@@ -1,17 +1,19 @@
 using System.Net.Http.Json;
+using Core.Application;
 using Shared.Models;
 
-namespace Vibik.Services;
+namespace Infrastructure.Api;
 
-public class UserApi(HttpClient httpClient, bool useStub = false): IUserApi
+public class UserApi: IUserApi
 {
-    public static UserApi Create(string baseUrl, bool useStub = false, HttpMessageHandler? handler = null)
+    private readonly HttpClient httpClient;
+    private readonly bool useStub;
+    public UserApi(HttpClient httpClient, bool useStub = true)
     {
-        var client = handler is null ? new HttpClient() : new HttpClient(handler);
-        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-        return new UserApi(client, useStub);
+        this.httpClient = httpClient;
+        httpClient.BaseAddress = new Uri("http://localhost:5000");
+        this.useStub = useStub;
     }
-
     public async Task<User?> GetUserAsync(string userId, CancellationToken ct = default)
     {
         if (useStub) return StubUser(userId);

@@ -1,5 +1,6 @@
 using Task = Shared.Models.Task;
-namespace Vibik.Services;
+
+namespace Core.Application;
 
 public interface ITaskApi
 {
