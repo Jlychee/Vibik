@@ -1,5 +1,7 @@
-﻿using Vibik.Resources.Components;
-using Vibik.Services;
+﻿using Core;
+using Core.Application;
+using Infrastructure.Api;
+using Vibik.Resources.Components;
 using TaskModel = Shared.Models.Task;
 
 namespace Vibik;
@@ -36,10 +38,8 @@ public partial class MainPage
     public string WeatherTemp => "25°";
     public string WeatherInfoAboutSky => "Облачно";
     public string WeatherInfoAboutFallout => "Осадков не ожидается";
-
-    //public MainPage() : this(TaskApi.Create("https://localhost:5001/", useStub: false)) { }
-
-    private MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage)
+    
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage)
     {
         InitializeComponent();
         BindingContext = this;
@@ -154,6 +154,6 @@ public partial class MainPage
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new ProfilePage());
+        await Navigation.PushAsync(new ProfilePage(userApi, loginPage));
     }
-}
+}   

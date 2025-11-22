@@ -1,12 +1,15 @@
-using Microsoft.Maui.Storage;
-using Vibik.Services;
+using Core.Application;
 
 namespace Vibik;
 
-public partial class LoginPage: ContentPage
+public partial class LoginPage : ContentPage
 {
     private readonly IUserApi userApi;
-    
+
+    public static IUserApi UserApi { get; set; }
+
+    public LoginPage() : this(UserApi) { }
+
     public LoginPage(IUserApi userApi)
     {
         InitializeComponent();

@@ -36,6 +36,7 @@
     <Color x:Key="NavySeal">#F5F0EB</Color>
     <Color x:Key="LightYelloww">#F8D59F</Color>
     <Color x:Key="TextBrown"> #723E26</Color>    
+    <Color x:Key="Mint"> #AFC8B2 </Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>

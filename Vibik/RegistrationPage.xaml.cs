@@ -1,5 +1,4 @@
-using Vibik.Services;
-using Microsoft.Maui.Storage;
+using Core.Application;
 
 namespace Vibik;
 
@@ -36,7 +35,7 @@ public partial class RegistrationPage: ContentPage
             }
 
             Preferences.Set("current_user", user.Username);
-            Preferences.Set("display_name", user.DisplayName ?? user.Username);
+            Preferences.Set("display_name", user.DisplayName);
 
             Application.Current!.MainPage = new AppShell();
         }

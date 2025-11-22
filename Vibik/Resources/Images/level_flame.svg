@@ -1,0 +1,18 @@
+<svg width="104" height="116" viewBox="0 0 104 116" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-11.456" y="-11.2626" width="126.017" height="138.703"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(6.36px);clip-path:url(#bgblur_0_161_225_clip_path);height:100%;width:100%"></div></foreignObject><g filter="url(#filter0_g_161_225)" data-figma-bg-blur-radius="12.729">
+<path d="M101.832 64.4122C101.832 92.1918 79.261 114.712 51.4187 114.712C23.5764 114.712 1.27295 92.1928 1.27295 64.4132C22.2137 -31.5405 12.477 69.8295 40.3193 69.8295C63.5868 18.758 80.3825 -51.6619 101.832 64.4122Z" fill="#FBAB1B"/>
+</g>
+<path d="M16.7847 69.565C9.66149 92.7295 14.458 116.769 59.4048 112.776C82.1673 112.776 100.868 90.4587 96.6701 70.8431C79.55 -9.14972 68.4792 64.795 68.4792 75.3593C21.292 -47.4115 37.7255 1.46606 16.7847 69.565Z" fill="#F6DA5E"/>
+<defs>
+<filter id="filter0_g_161_225" x="-11.456" y="-11.2626" width="126.017" height="138.703" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="7.8561062812805176 7.8561062812805176" numOctaves="3" seed="2520" />
+<feDisplacementMap in="shape" scale="2.5457901954650879" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+<feMerge result="effect1_texture_161_225">
+<feMergeNode in="displacedImage"/>
+</feMerge>
+</filter>
+<clipPath id="bgblur_0_161_225_clip_path" transform="translate(11.456 11.2626)"><path d="M101.832 64.4122C101.832 92.1918 79.261 114.712 51.4187 114.712C23.5764 114.712 1.27295 92.1928 1.27295 64.4132C22.2137 -31.5405 12.477 69.8295 40.3193 69.8295C63.5868 18.758 80.3825 -51.6619 101.832 64.4122Z"/>
+</clipPath></defs>
+</svg>
