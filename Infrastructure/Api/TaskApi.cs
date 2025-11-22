@@ -111,6 +111,20 @@ public sealed class TaskApi: ITaskApi
                     ExamplePhotos = null,
                     UserPhotos = []
                 }
+            },
+            new TaskModel
+            {
+                TaskId = "3",
+                Name = "Медовые 666",
+                StartTime = DateTime.UtcNow.AddDays(-1),
+                Reward = 50,
+                ExtendedInfo = new TaskExtendedInfo
+                {
+                    Description = "ЛОВУШКААКАКА",
+                    PhotosRequired = 9,
+                    ExamplePhotos = null,
+                    UserPhotos = []
+                }
             }
         ];
     }

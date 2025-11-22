@@ -8,6 +8,7 @@ namespace Vibik;
 
 public partial class MainPage
 {
+    private readonly Random random = new();
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
@@ -66,8 +67,8 @@ public partial class MainPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await LoadTasksAsync();
         await LoadUserAsync();
+        await LoadTasksAsync();
     }
     
     private async Task LoadUserAsync()
@@ -111,27 +112,72 @@ public partial class MainPage
     
     private void ApplyFilter()
     {
-        IEnumerable<TaskModel> filtered = allTasks;
+        var  filtered = allTasks.ToList();
 
         //  фильтр по выполненным
         // if (!ShowCompleted) { ... }
 
         CardsHost.Children.Clear();
 
-        foreach (var task in filtered)
+        for (var i = 0; i < 4; i++)
         {
             var card = new TaskCard
             {
                 TaskApi = taskApi,
-                Item = task,
-                Title = task.Name,
-                DaysPassed = task.DaysPassed(),
-                Cost = task.Reward,
-                SwapCost = task.Swap,
-                RefreshCommand = new Command(() =>
-                    DisplayAlert("Смена задания", $"Заменить: {task.Name}", "OK")),
+                Item = filtered[i],
+                Title = filtered[i].Name,
+                DaysPassed = filtered[i].DaysPassed(),
+                Cost = filtered[i].Reward,
+                SwapCost = filtered[i].Swap,
+                // RefreshCommand = new Command(async () =>
+                // {
+                //     var ok = await taskApi.SwapTaskAsync(task.TaskId);
+                //     if (!ok)
+                //     {
+                //         await DisplayAlert("Ошибка", "Не удалось сменить задание. Попробуйте позже.", "OK");
+                //         return;
+                //     }
+                //
+                //     await LoadTasksAsync();
+                //     await LoadUserAsync();
+                //     // тут менять кол-во монет 
+                //     
+                // }),
+                    
                 HorizontalOptions = LayoutOptions.Fill
             };
+            card.RefreshCommand = new Command(async () =>
+            {
+                var current = card.Item;
+                if (current is null)
+                    return;
+                
+                var confirmed = await DisplayAlert(
+                    "Сменить задание",
+                    $"Вы уверены, что хотите поменять задание за {card.SwapCost} опыта?",
+                    "Да",
+                    "Нет");
+
+                if (!confirmed)
+                    return;
+
+                var alternatives = allTasks
+                    .Where(t => t.TaskId != current.TaskId)
+                    .ToList();
+
+                if (alternatives.Count == 0)
+                    return;
+
+                var next = alternatives[random.Next(alternatives.Count)];
+
+                card.Item = next;
+                card.Title = next.Name;
+                card.DaysPassed = next.DaysPassed();
+                card.Cost = next.Reward;
+                card.SwapCost = next.Swap;
+            });
+
+
 
             // Если появится иконка у задач
             // if (!string.IsNullOrWhiteSpace(task.Icon))

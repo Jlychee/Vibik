@@ -74,7 +74,7 @@ public partial class TaskCard
 
     public string DaysPassedText => DaysPassed == 0 ? "со старта сегодня" : $"со старта прошло {DaysPassed} дн.";
     public string CostText => $"награда: {Cost}";
-    public string AvailableCoinsText => $"монет: {AvailableCoins}";
+    public string AvailableCoinsText => $"монет: {SwapCost}";
 
     private static void OnAffectsTexts(BindableObject bindable, object oldValue, object newValue)
     {

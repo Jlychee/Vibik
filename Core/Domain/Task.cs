@@ -8,6 +8,6 @@ public class Task
     public int Reward {get; set;}
     public TaskExtendedInfo ExtendedInfo {get; set;}
 
-    private const int MagicConst = 1;
-    public int Swap => Reward * MagicConst;
+    private const double MagicConst = 0.3;
+    public int Swap => (int)(Reward * MagicConst);
 }
