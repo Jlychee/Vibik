@@ -1,6 +1,6 @@
 using Task = Shared.Models.Task;
 
-namespace Core.Application;
+namespace Core;
 
 public interface ITaskApi
 {

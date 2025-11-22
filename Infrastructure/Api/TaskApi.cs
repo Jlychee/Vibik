@@ -1,17 +1,20 @@
 using System.Net.Http.Json;
-using Core.Application;
-using TaskModel = Shared.Models.Task;
+using Core;
 using Shared.Models;
+using TaskModel = Shared.Models.Task;
 
 namespace Infrastructure.Api;
 
-public sealed class TaskApi(HttpClient httpClient, bool useStub = true) : ITaskApi
+public sealed class TaskApi: ITaskApi
 {
-    public static TaskApi Create(string baseUrl, bool useStub = false, HttpMessageHandler? handler = null)
-    {
-        var client = handler is null ? new HttpClient() : new HttpClient(handler);
-        client.BaseAddress = new Uri(baseUrl);
-        return new TaskApi(client, useStub);
+    private readonly HttpClient httpClient;
+    private readonly bool useStub;
+
+    public TaskApi(HttpClient httpClient, bool useStub = true)
+    { 
+        this.httpClient = httpClient;
+        this.httpClient.BaseAddress ??= new Uri("http://localhost:5000");
+        this.useStub = useStub;
     }
 
     public async Task<IReadOnlyList<TaskModel>> GetTasksAsync(CancellationToken ct = default)
@@ -45,6 +48,7 @@ public sealed class TaskApi(HttpClient httpClient, bool useStub = true) : ITaskA
         var resp = await httpClient.PostAsync($"api/tasks/{Uri.EscapeDataString(taskId)}/submit", content, ct);
         return resp.IsSuccessStatusCode;
     }
+
 
     private static List<TaskModel> StubTasks()
     {
