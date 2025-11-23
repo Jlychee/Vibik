@@ -28,6 +28,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITaskApi, TaskApi>();
         builder.Services.AddSingleton<IUserApi, UserApi>();
         builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton<IWeatherApi, WeatherService>();
+
         
 
 

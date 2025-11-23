@@ -1,7 +1,9 @@
 ﻿using Core;
 using Core.Application;
 using Infrastructure.Api;
+using Shared.Models;
 using Vibik.Resources.Components;
+using Task = System.Threading.Tasks.Task;
 using TaskModel = Shared.Models.Task;
 
 namespace Vibik;
@@ -14,15 +16,23 @@ public partial class MainPage
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
+    private readonly IWeatherApi weatherApi;
 
     private int level;
     private int experience;
     private ImageSource? weatherImage;
 
     public ImageSource? WeatherImage { get => weatherImage; set { weatherImage = value; OnPropertyChanged(); } }
+    private string weatherTemp = "—";
+    private string weatherInfoAboutSky = "Загружаем погоду...";
+    private string weatherInfoAboutFallout = string.Empty;
+    private WeatherInfo? lastWeather;
+
     public int Level { get => level; set { level = value; OnPropertyChanged(); } }
     public int Experience { get => experience; set { experience = value; OnPropertyChanged(); } }
-
+    public string WeatherTemp { get => weatherTemp; set { weatherTemp = value; OnPropertyChanged(); } }
+    public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
+    public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
     private bool showCompleted;
     public bool ShowCompleted
     {
@@ -35,41 +45,76 @@ public partial class MainPage
             ApplyFilter();
         }
     }
-
-    // #ЗАГЛУШКА: вытаскивать из погодного апи
-    public string WeatherTemp => "25°";
-    public string WeatherInfoAboutSky => "Облачно";
-    public string WeatherInfoAboutFallout => "Осадков не ожидается";
     
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage)
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
     {
         InitializeComponent();
         BindingContext = this;
         this.taskApi = taskApi;
         this.userApi = userApi;
-        WeatherImage = ImageSource.FromFile("cloudy_weather.png");
+        this.weatherApi = weatherApi;
         this.loginPage = loginPage;
     }
 
-    // #ЗАГЛУШКА: маппинг погодного кода на картинку
     private void UpdateWeatherIcon(string condition)
     {
-        WeatherImage = condition switch
+        var normalized = condition.ToLowerInvariant();
+        WeatherImage = normalized switch
         {
-            "Clear" => ImageSource.FromFile("sunny_weather.png"),
-            "Clouds" => ImageSource.FromFile("cloudy_weather.png"),
-            "Rain" or "Drizzle" => ImageSource.FromFile("rain_weather.png"),
-            "Snow" => ImageSource.FromFile("snow_weather.png"),
-            "Thunderstorm" => ImageSource.FromFile("storm_weather.png"),
+            "clear" => ImageSource.FromFile("sunny_weather.svg"),
+            "clouds" => ImageSource.FromFile("cloudy_weather.svg"),
+            "rain" or "drizzle" => ImageSource.FromFile("rain_weather.svg"),
+            "snow" => ImageSource.FromFile("snow_weather.svg"),
+            "thunderstorm" => ImageSource.FromFile("storm_weather.svg"),
             _ => null
         };
     }
+    private async Task LoadWeatherAsync()
+    {
+        try
+        {
+            var weather = await weatherApi.GetCurrentWeatherAsync();
+            ApplyWeather(weather);
+        }
+        catch (Exception ex)
+        {
+            if (lastWeather != null)
+            {
+                ApplyWeather(lastWeather);
+                await DisplayAlert("Проблема с погодой", "Не удалось обновить погоду, показываем последнее значение.", "OK");
+            }
+            else
+            {
+                WeatherTemp = "—";
+                WeatherInfoAboutSky = "Погода недоступна";
+                WeatherInfoAboutFallout = "Проверьте подключение к интернету";
+                WeatherImage = null;
+                await DisplayAlert("Ошибка", $"Не удалось загрузить погоду: {ex.Message}", "OK");
+            }
+        }
+    }
 
+    private void ApplyWeather(WeatherInfo weather)
+    {
+        lastWeather = weather;
+        WeatherTemp = $"{Math.Round(weather.TemperatureCelsius)}°";
+        WeatherInfoAboutSky = string.IsNullOrWhiteSpace(weather.Description)
+            ? weather.Condition
+            : weather.Description;
+        WeatherInfoAboutFallout = weather.Condition.ToLowerInvariant() switch
+        {
+            "rain" or "drizzle" => "Возможны осадки",
+            "snow" => "Возможен снег",
+            "thunderstorm" => "Вероятна гроза",
+            _ => "Осадков не ожидается"
+        };
+        UpdateWeatherIcon(weather.Condition);
+    }
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         await LoadUserAsync();
-
+        await LoadWeatherAsync();
         if (taskLoaded) return;
         await LoadTasksAsync();
         taskLoaded = true;
