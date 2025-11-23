@@ -54,8 +54,10 @@
                                Source="{Binding WeatherImage, TargetNullValue=cloudy_weather.png}"
                                HorizontalOptions="Start"
                                VerticalOptions="Center"
-                               WidthRequest="112"
-                               HeightRequest="62"
+                               MaximumHeightRequest="100.59"
+                               MinimumHeightRequest="62"
+                               MaximumWidthRequest="112"
+                               MinimumWidthRequest="85.13"
                                Aspect="AspectFit"
                                InputTransparent="True"/>
 

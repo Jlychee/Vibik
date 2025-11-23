@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Core.Application;
@@ -8,7 +7,7 @@ namespace Infrastructure.Api;
 
 public class WeatherService : IWeatherApi
 {
-    private static readonly Random rand = new Random();
+    private static readonly Random rand = new();
     private const string DefaultLatitude = "56.8";
     private const string DefaultLongitude = "66.6";
     private const string BaseUrl = "https://api.openweathermap.org/data/2.5/weather";
