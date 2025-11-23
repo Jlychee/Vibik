@@ -8,6 +8,7 @@ namespace Vibik;
 
 public partial class MainPage
 {
+    private bool taskLoaded = false;
     private readonly Random random = new();
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
@@ -68,7 +69,10 @@ public partial class MainPage
     {
         base.OnAppearing();
         await LoadUserAsync();
+
+        if (taskLoaded) return;
         await LoadTasksAsync();
+        taskLoaded = true;
     }
     
     private async Task LoadUserAsync()
@@ -161,14 +165,28 @@ public partial class MainPage
                 if (!confirmed)
                     return;
 
-                var alternatives = allTasks
-                    .Where(t => t.TaskId != current.TaskId)
+                var currentTaskIds = CardsHost.Children
+                    .OfType<TaskCard>()
+                    .Select(c => c.Item?.TaskId)
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .ToHashSet();
+
+                // 3. Кандидаты: не выполненные и не находящиеся в текущих карточках
+                var candidates = allTasks
+                    .Where(t =>
+                        !t.Completed &&
+                        !currentTaskIds.Contains(t.TaskId))
                     .ToList();
 
-                if (alternatives.Count == 0)
+                if (candidates.Count == 0)
+                {
+                    await DisplayAlert("Новых заданий нет",
+                        "Сейчас нет заданий, которые вы ещё не делали и которых нет среди текущих.",
+                        "OK");
                     return;
+                }
 
-                var next = alternatives[random.Next(alternatives.Count)];
+                var next = candidates[random.Next(candidates.Count)];
 
                 card.Item = next;
                 card.Title = next.Name;
@@ -189,7 +207,7 @@ public partial class MainPage
 
     private async void OnMapClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new Map());
+        await Navigation.PushAsync(new MapPage());
     }
 
     private async void OnHomeClicked(object sender, EventArgs e)

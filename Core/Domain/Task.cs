@@ -6,6 +6,8 @@ public class Task
     public string Name { get; set; }
     public DateTime StartTime { get; set; }
     public int Reward {get; set;}
+    
+    public bool Completed { get; set; }
     public TaskExtendedInfo ExtendedInfo {get; set;}
 
     private const double MagicConst = 0.3;

@@ -6,7 +6,7 @@
     
     <Grid BackgroundColor="{StaticResource NavySeal}">
         <!-- Основной контент прокручиваемый -->
-        <ScrollView x:Name="ProfileScroll">
+        <ScrollView x:Name="ProfileScroll" HorizontalOptions="Center">
             <VerticalStackLayout Padding="24,60,24,100"
                                     Spacing="24"
                                     HorizontalOptions="Center">

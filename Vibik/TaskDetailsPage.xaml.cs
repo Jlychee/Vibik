@@ -44,6 +44,7 @@ public partial class TaskDetailsPage
 
         // #ЗАГЛУШКА: здесь будет реальная отправка
         await DisplayAlert("Готово", "Задание отправлено (заглушка).", "OK");
+        task.Completed = true;
     }
 
     private const int Columns = 3;

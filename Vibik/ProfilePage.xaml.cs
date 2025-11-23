@@ -112,7 +112,7 @@ public partial class ProfilePage
 
     private async void OnMapClicked(object? sender, EventArgs e)
     {
-        await Navigation.PushAsync(new Map());
+        await Navigation.PushAsync(new MapPage());
     }
 
     private void OnLogoutClicked(object? sender, EventArgs e)

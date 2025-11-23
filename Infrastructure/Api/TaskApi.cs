@@ -60,6 +60,7 @@ public sealed class TaskApi: ITaskApi
                 Name = "Сфотографируй облака",
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
+                Completed = false,
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "Найди интересные облака и сфотографируй",
@@ -75,6 +76,7 @@ public sealed class TaskApi: ITaskApi
                 Name = "Пейзаж у воды",
                 StartTime = DateTime.UtcNow.AddDays(-3),
                 Reward = 80,
+                Completed = false,
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "Линия горизонта и отражения",
@@ -90,6 +92,7 @@ public sealed class TaskApi: ITaskApi
                 Name = "Медовые 6",
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
+                Completed = false,
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "Сфотографируй 6 желтых машин",
@@ -104,6 +107,7 @@ public sealed class TaskApi: ITaskApi
                 Name = "Медовые 9",
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
+                Completed = false,
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "Сфотографируй 9 желтых машин",
@@ -114,14 +118,30 @@ public sealed class TaskApi: ITaskApi
             },
             new TaskModel
             {
-                TaskId = "3",
+                TaskId = "4",
                 Name = "Медовые 666",
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
+                Completed = false,
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "ЛОВУШКААКАКА",
                     PhotosRequired = 9,
+                    ExamplePhotos = null,
+                    UserPhotos = []
+                }
+            },
+            new TaskModel
+            {
+                TaskId = "5",
+                Name = "Русский андерграунд",
+                StartTime = DateTime.UtcNow,
+                Reward = 50,
+                Completed = false,
+                ExtendedInfo = new TaskExtendedInfo
+                {
+                    Description = "Сфоткать 5 графифити",
+                    PhotosRequired = 5,
                     ExamplePhotos = null,
                     UserPhotos = []
                 }
