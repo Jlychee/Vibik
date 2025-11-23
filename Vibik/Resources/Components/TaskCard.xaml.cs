@@ -1,16 +1,23 @@
 using System.Windows.Input;
-using Vibik.Services;
+using Core;
+using Core.Application;
 using Task = Shared.Models.Task;
 
 namespace Vibik.Resources.Components;
 
-public partial class TaskCard : ContentView
+public partial class TaskCard
 {
-    private static int moneyOnTheAccount = 30; // можно удалить, если используешь AvailableCoins
+    private static readonly BindableProperty TaskApiProperty =
+        BindableProperty.Create(nameof(TaskApi), typeof(ITaskApi), typeof(TaskCard));
 
-    public static readonly BindableProperty TaskApiProperty =
-        BindableProperty.Create(nameof(TaskApi), typeof(ITaskApi), typeof(TaskCard), default(ITaskApi));
+    private static readonly BindableProperty UserApiProperty =
+        BindableProperty.Create(nameof(UserApi), typeof(IUserApi), typeof(TaskCard));
 
+    public IUserApi UserApi
+    {
+        get => (IUserApi) GetValue(UserApiProperty);
+        set => SetValue(UserApiProperty, value);
+    }
     public ITaskApi? TaskApi
     {
         get => (ITaskApi?)GetValue(TaskApiProperty);
@@ -42,8 +49,13 @@ public partial class TaskCard : ContentView
 
     public static readonly BindableProperty AvailableCoinsProperty =
         BindableProperty.Create(nameof(AvailableCoins), typeof(int), typeof(TaskCard), 0, propertyChanged: OnAffectsColorAndTexts);
-    public int AvailableCoins { get => (int)GetValue(AvailableCoinsProperty); set => SetValue(AvailableCoinsProperty, value); }
 
+    public int AvailableCoins
+    {
+        get => (int)GetValue(AvailableCoinsProperty);
+        set => SetValue(AvailableCoinsProperty, value);
+    }
+    
     public static readonly BindableProperty CoinsColorProperty =
         BindableProperty.Create(nameof(CoinsColor), typeof(Color), typeof(TaskCard), Colors.Gray);
     public Color CoinsColor { get => (Color)GetValue(CoinsColorProperty); set => SetValue(CoinsColorProperty, value); }
@@ -62,7 +74,7 @@ public partial class TaskCard : ContentView
 
     public string DaysPassedText => DaysPassed == 0 ? "со старта сегодня" : $"со старта прошло {DaysPassed} дн.";
     public string CostText => $"награда: {Cost}";
-    public string AvailableCoinsText => $"монет: {AvailableCoins}";
+    public string AvailableCoinsText => $"монет: {SwapCost}";
 
     private static void OnAffectsTexts(BindableObject bindable, object oldValue, object newValue)
     {
@@ -82,7 +94,7 @@ public partial class TaskCard : ContentView
 
     private void UpdateCoinsColor()
     {
-        var enoughMoney = AvailableCoins > 0 ? AvailableCoins >= SwapCost : Cost <= moneyOnTheAccount;
+        var enoughMoney = AvailableCoins >= SwapCost;
 
         var ok  = GetColorFromResources("AccentGreen", Colors.White);
         var low = GetColorFromResources("NoMoneyRed",  Color.FromArgb("#80FFFFFF"));
@@ -102,8 +114,6 @@ public partial class TaskCard : ContentView
         var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as Task;
         var item = fromGesture ?? Item;
         if (item is null) return;
-        var api = TaskApi ?? Vibik.Services.TaskApi.Create("https://localhost:5001/", useStub: true);
-
         await Navigation.PushAsync(new TaskDetailsPage(item));
     }
 }

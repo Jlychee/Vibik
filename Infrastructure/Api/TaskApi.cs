@@ -1,16 +1,20 @@
 using System.Net.Http.Json;
-using TaskModel = Shared.Models.Task;
+using Core;
 using Shared.Models;
+using TaskModel = Shared.Models.Task;
 
-namespace Vibik.Services;
+namespace Infrastructure.Api;
 
-public sealed class TaskApi(HttpClient httpClient, bool useStub = false) : ITaskApi
+public sealed class TaskApi: ITaskApi
 {
-    public static TaskApi Create(string baseUrl, bool useStub = false, HttpMessageHandler? handler = null)
-    {
-        var client = handler is null ? new HttpClient() : new HttpClient(handler);
-        client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-        return new TaskApi(client, useStub);
+    private readonly HttpClient httpClient;
+    private readonly bool useStub;
+
+    public TaskApi(HttpClient httpClient, bool useStub = true)
+    { 
+        this.httpClient = httpClient;
+        this.httpClient.BaseAddress ??= new Uri("http://localhost:5000");
+        this.useStub = useStub;
     }
 
     public async Task<IReadOnlyList<TaskModel>> GetTasksAsync(CancellationToken ct = default)
@@ -44,6 +48,7 @@ public sealed class TaskApi(HttpClient httpClient, bool useStub = false) : ITask
         var resp = await httpClient.PostAsync($"api/tasks/{Uri.EscapeDataString(taskId)}/submit", content, ct);
         return resp.IsSuccessStatusCode;
     }
+
 
     private static List<TaskModel> StubTasks()
     {
@@ -102,6 +107,20 @@ public sealed class TaskApi(HttpClient httpClient, bool useStub = false) : ITask
                 ExtendedInfo = new TaskExtendedInfo
                 {
                     Description = "Сфотографируй 9 желтых машин",
+                    PhotosRequired = 9,
+                    ExamplePhotos = null,
+                    UserPhotos = []
+                }
+            },
+            new TaskModel
+            {
+                TaskId = "3",
+                Name = "Медовые 666",
+                StartTime = DateTime.UtcNow.AddDays(-1),
+                Reward = 50,
+                ExtendedInfo = new TaskExtendedInfo
+                {
+                    Description = "ЛОВУШКААКАКА",
                     PhotosRequired = 9,
                     ExamplePhotos = null,
                     UserPhotos = []
