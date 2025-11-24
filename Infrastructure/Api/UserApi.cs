@@ -8,7 +8,7 @@ public class UserApi: IUserApi
 {
     private readonly HttpClient httpClient;
     private readonly bool useStub;
-    public UserApi(HttpClient httpClient, bool useStub = true)
+    public UserApi(HttpClient httpClient, bool useStub = false)
     {
         this.httpClient = httpClient;
         httpClient.BaseAddress = new Uri("http://localhost:5000");
