@@ -88,6 +88,11 @@
                     FontSize="18"
                     HorizontalOptions="FillAndExpand">
             </Button>
+            <VerticalStackLayout Padding="16" Spacing="12">
+                <Button Text="Поделиться последним логом" Clicked="OnShareLatestLogClicked" />
+            </VerticalStackLayout>
+
         </StackLayout>
+        
     </ContentPage.Content>
 </ContentPage>

@@ -1,3 +1,5 @@
+using Core;
+using Core.Interfaces;
 using Shared.Models;
 using Utils;
 using Task = System.Threading.Tasks.Task;
@@ -9,14 +11,16 @@ public partial class TaskDetailsPage
     private const int TileSize = 120;
 
     private readonly Shared.Models.Task task;
+    private readonly ITaskApi taskApi;
+
 
     private TaskExtendedInfo ExtendedInfo => task.ExtendedInfo;
 
-    public TaskDetailsPage(Shared.Models.Task task)
+    public TaskDetailsPage(Shared.Models.Task task, ITaskApi taskApi)
     {
         InitializeComponent();
         this.task = task ?? throw new ArgumentNullException(nameof(task));
-        this.task.ExtendedInfo ??= new TaskExtendedInfo { UserPhotos = [] };
+        this.taskApi = taskApi ?? throw new ArgumentNullException(nameof(taskApi));
         this.task.ExtendedInfo.UserPhotos ??= [];
         BindingContext = new ViewModel(this.task);
         LoadSavedPhotos();
@@ -42,11 +46,40 @@ public partial class TaskDetailsPage
             return;
         }
 
-        // #ЗАГЛУШКА: здесь будет реальная отправка
-        await DisplayAlert("Готово", "Задание отправлено (заглушка).", "OK");
-        task.Completed = true;
-    }
+        var localPaths = ExtendedInfo.UserPhotos
+            .Select(p => p.Url)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Where(IsLocalPath)
+            .Where(File.Exists)
+            .ToList();
 
+        if (localPaths.Count == 0)
+        {
+            await DisplayAlert("Нет фото", "Добавьте хотя бы одно фото", "OK");
+            return;
+        }
+
+        try
+        {
+            var ok = await taskApi.SubmitAsync(task.TaskId ?? TaskKey, localPaths);
+            if (!ok)
+            {
+                await DisplayAlert("Ошибка", "Не удалось отправить задание. Проверьте сеть и попробуйте ещё раз.",
+                    "OK");
+                return;
+            }
+
+            await DisplayAlert("Готово", "Задание отправлено!", "OK");
+            task.Completed = true;
+            foreach (var p in localPaths) TryDeleteLocal(p);
+            BuildPhotosGrid();
+        }
+        catch (Exception exception)
+        {
+            await DisplayAlert("Ошибка", exception.Message, "OK");
+        }
+    }
+    
     private const int Columns = 3;
     private const double CellGap = 24;
 
@@ -96,10 +129,7 @@ public partial class TaskDetailsPage
         ExtendedInfo.UserPhotos.RemoveAll(p =>
         {
             if (string.IsNullOrWhiteSpace(p.Url)) return false;
-            if (Uri.TryCreate(p.Url, UriKind.Absolute, out var uri) &&
-                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
-                return false;
-
+            if (!IsLocalPath(p.Url)) return false;
             return !File.Exists(p.Url);
         });
 
@@ -173,15 +203,7 @@ public partial class TaskDetailsPage
                 var idx = ExtendedInfo.UserPhotos.FindIndex(p => p.Url == path);
                 if (idx >= 0)
                 {
-                    if (File.Exists(ExtendedInfo.UserPhotos[idx].Url))
-                        try
-                        {
-                            File.Delete(ExtendedInfo.UserPhotos[idx].Url);
-                        }
-                        catch
-                        {
-                            await DisplayAlert("Ошибка", "при удалении фото", "Понятно");
-                        }
+                    TryDeleteLocal(ExtendedInfo.UserPhotos[idx].Url);
 
                     ExtendedInfo.UserPhotos[idx] = new PhotoModel { Url = newPath };
                     BuildPhotosGrid();
@@ -195,8 +217,7 @@ public partial class TaskDetailsPage
                 if (!ok) return;
 
                 var removed = ExtendedInfo.UserPhotos.RemoveAll(p => p.Url == path) > 0;
-                if (removed && File.Exists(path))
-                    try { File.Delete(path); } catch { }
+                if (removed) TryDeleteLocal(path);
                 BuildPhotosGrid();
                 break;
             }
@@ -241,7 +262,25 @@ public partial class TaskDetailsPage
             ? task.TaskId
             : PhotoService.Slug(string.IsNullOrWhiteSpace(task.Name) ? "task" : task.Name);
 
-    
+    private static bool IsLocalPath(string urlOrPath)
+    {
+        if(Uri.TryCreate(urlOrPath, UriKind.Absolute, out var uri))
+            return !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        return true;
+    }
+
+    private static void TryDeleteLocal(string path)
+    {
+        try
+        {
+            if(IsLocalPath(path) && !File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+            // ignored
+        }
+    }
     private async Task ShowPreviewAsync(string pathOrUrl)
     {
         var img = new Image

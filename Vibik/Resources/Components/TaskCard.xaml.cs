@@ -114,6 +114,6 @@ public partial class TaskCard
         var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as Task;
         var item = fromGesture ?? Item;
         if (item is null) return;
-        await Navigation.PushAsync(new TaskDetailsPage(item));
+        await Navigation.PushAsync(new TaskDetailsPage(item, TaskApi));
     }
 }

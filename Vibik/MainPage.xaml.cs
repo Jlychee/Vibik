@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using System.Collections.ObjectModel;
+using Core;
 using Core.Application;
 using Infrastructure.Api;
 using Shared.Models;
@@ -28,6 +29,8 @@ public partial class MainPage
     private string weatherInfoAboutFallout = string.Empty;
     private WeatherInfo? lastWeather;
 
+    public ObservableCollection<TaskModel> Tasks { get; } = new();
+
     public int Level { get => level; set { level = value; OnPropertyChanged(); } }
     public int Experience { get => experience; set { experience = value; OnPropertyChanged(); } }
     public string WeatherTemp { get => weatherTemp; set { weatherTemp = value; OnPropertyChanged(); } }
@@ -45,7 +48,18 @@ public partial class MainPage
             ApplyFilter();
         }
     }
-    
+    private bool noTasks;
+    public bool NoTasks
+    {
+        get => noTasks;
+        set
+        {
+            if (noTasks == value) return;
+            noTasks = value;
+            OnPropertyChanged();
+        }
+    }
+
     public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
     {
         InitializeComponent();
@@ -156,97 +170,105 @@ public partial class MainPage
         catch (Exception ex)
         {
             await DisplayAlert("Ошибка", $"Не удалось загрузить задания: {ex.Message}", "OK");
+            Tasks.Clear();
         }
     }
     
     private void ApplyFilter()
     {
         var  filtered = allTasks.ToList();
-
-        //  фильтр по выполненным
-        // if (!ShowCompleted) { ... }
-
-        CardsHost.Children.Clear();
-
-        for (var i = 0; i < 4; i++)
+        var count = filtered.Count;
+        if (count == 0)
         {
-            var card = new TaskCard
-            {
-                TaskApi = taskApi,
-                Item = filtered[i],
-                Title = filtered[i].Name,
-                DaysPassed = filtered[i].DaysPassed(),
-                Cost = filtered[i].Reward,
-                SwapCost = filtered[i].Swap,
-                // RefreshCommand = new Command(async () =>
-                // {
-                //     var ok = await taskApi.SwapTaskAsync(task.TaskId);
-                //     if (!ok)
-                //     {
-                //         await DisplayAlert("Ошибка", "Не удалось сменить задание. Попробуйте позже.", "OK");
-                //         return;
-                //     }
-                //
-                //     await LoadTasksAsync();
-                //     await LoadUserAsync();
-                //     // тут менять кол-во монет 
-                //     
-                // }),
-                    
-                HorizontalOptions = LayoutOptions.Fill
-            };
-            card.RefreshCommand = new Command(async () =>
-            {
-                var current = card.Item;
-                if (current is null)
-                    return;
-                
-                var confirmed = await DisplayAlert(
-                    "Сменить задание",
-                    $"Вы уверены, что хотите поменять задание за {card.SwapCost} опыта?",
-                    "Да",
-                    "Нет");
+            noTasks = true;
+            return;
+        }
+        
+        if (count > 4) 
+            count = 4;
+         //  фильтр по выполненным
+         // if (!ShowCompleted) { ... }
 
-                if (!confirmed)
-                    return;
-
-                var currentTaskIds = CardsHost.Children
-                    .OfType<TaskCard>()
-                    .Select(c => c.Item?.TaskId)
-                    .Where(id => !string.IsNullOrEmpty(id))
-                    .ToHashSet();
-
-                // 3. Кандидаты: не выполненные и не находящиеся в текущих карточках
-                var candidates = allTasks
-                    .Where(t =>
-                        !t.Completed &&
-                        !currentTaskIds.Contains(t.TaskId))
-                    .ToList();
-
-                if (candidates.Count == 0)
-                {
-                    await DisplayAlert("Новых заданий нет",
-                        "Сейчас нет заданий, которые вы ещё не делали и которых нет среди текущих.",
-                        "OK");
-                    return;
-                }
-
-                var next = candidates[random.Next(candidates.Count)];
-
-                card.Item = next;
-                card.Title = next.Name;
-                card.DaysPassed = next.DaysPassed();
-                card.Cost = next.Reward;
-                card.SwapCost = next.Swap;
-            });
-
-
-
-            // Если появится иконка у задач
-            // if (!string.IsNullOrWhiteSpace(task.Icon))
-            //     card.IconSource = ImageSource.FromFile(task.Icon);
-
-            CardsHost.Children.Add(card);
+         CardsHost.Children.Clear();
+        
+         for (var i = 0; i < count; i++)
+         {
+             var card = new TaskCard
+             {
+                 TaskApi = taskApi,
+                 Item = filtered[i],
+                 Title = filtered[i].Name,
+                 DaysPassed = filtered[i].DaysPassed(),
+                 Cost = filtered[i].Reward,
+                 SwapCost = filtered[i].Swap,
+                 // RefreshCommand = new Command(async () =>
+                 // {
+                 //     var ok = await taskApi.SwapTaskAsync(task.TaskId);
+                 //     if (!ok)
+                 //     {
+                 //         await DisplayAlert("Ошибка", "Не удалось сменить задание. Попробуйте позже.", "OK");
+                 //         return;
+                 //     }
+                 //
+                 //     await LoadTasksAsync();
+                 //     await LoadUserAsync();
+                 //     // тут менять кол-во монет 
+                 //     
+                 // }),
+                     
+                 HorizontalOptions = LayoutOptions.Fill
+             };
+             card.RefreshCommand = new Command(async () =>
+             {
+                 var current = card.Item;
+                 if (current is null)
+                     return;
+                 
+                 var confirmed = await DisplayAlert(
+                     "Сменить задание",
+                     $"Вы уверены, что хотите поменять задание за {card.SwapCost} опыта?",
+                     "Да",
+                     "Нет");
+        
+                 if (!confirmed)
+                     return;
+        
+                 var currentTaskIds = CardsHost.Children
+                     .OfType<TaskCard>()
+                     .Select(c => c.Item?.TaskId)
+                     .Where(id => !string.IsNullOrEmpty(id))
+                     .ToHashSet();
+        
+                 var candidates = allTasks
+                     .Where(t =>
+                         !t.Completed &&
+                         !currentTaskIds.Contains(t.TaskId))
+                     .ToList();
+        
+                 if (candidates.Count == 0)
+                 {
+                     await DisplayAlert("Новых заданий нет",
+                         "Сейчас нет заданий, которые вы ещё не делали и которых нет среди текущих.",
+                         "OK");
+                     return;
+                 }
+        
+                 var next = candidates[random.Next(candidates.Count)];
+        
+                 card.Item = next;
+                 card.Title = next.Name;
+                 card.DaysPassed = next.DaysPassed();
+                 card.Cost = next.Reward;
+                 card.SwapCost = next.Swap;
+             });
+        
+        
+        
+             // Если появится иконка у задач
+             // if (!string.IsNullOrWhiteSpace(task.Icon))
+             //     card.IconSource = ImageSource.FromFile(task.Icon);
+        
+             CardsHost.Children.Add(card);
         }
     }
 
@@ -265,4 +287,27 @@ public partial class MainPage
     {
         await Navigation.PushAsync(new ProfilePage(userApi, loginPage));
     }
+
+    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+    {
+        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
+        Directory.CreateDirectory(dir);
+
+        var last = Directory.GetFiles(dir, "*.log")
+            .OrderByDescending(f => f)   // имена вида vibik-YYYYMMDD.log или raw-http.log
+            .FirstOrDefault();
+
+        if (last is null)
+        {
+            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
+            return;
+        }
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Vibik log",
+            File  = new ShareFile(last)
+        });
+    }
+
 }   

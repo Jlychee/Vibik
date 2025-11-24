@@ -10,30 +10,29 @@ public sealed class TaskApi: ITaskApi
     private readonly HttpClient httpClient;
     private readonly bool useStub;
 
-    public TaskApi(HttpClient httpClient, bool useStub = true)
+    public TaskApi(HttpClient httpClient, bool useStub = false)
     { 
         this.httpClient = httpClient;
-        this.httpClient.BaseAddress ??= new Uri("http://localhost:5000");
         this.useStub = useStub;
     }
 
     public async Task<IReadOnlyList<TaskModel>> GetTasksAsync(CancellationToken ct = default)
     {
         if (useStub) return StubTasks();
-        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>("api/tasks", ct);
+        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>("api/Tasks/get_all", ct);
         return list ?? [];
     }
 
     public async Task<TaskModel?> GetTaskAsync(string taskId, CancellationToken ct = default)
     {
         if (useStub) return StubTasks().FirstOrDefault(t => t.TaskId == taskId);
-        return await httpClient.GetFromJsonAsync<TaskModel>($"api/tasks/{Uri.EscapeDataString(taskId)}", ct);
+        return await httpClient.GetFromJsonAsync<TaskModel>($"api/Tasks/get_task/{Uri.EscapeDataString(taskId)}", ct);
     }
 
     public async Task<bool> SwapTaskAsync(string taskId, CancellationToken ct = default)
     {
         if (useStub) return true;
-        var resp = await httpClient.PostAsync($"api/tasks/{Uri.EscapeDataString(taskId)}/swap", content: null, ct);
+        var resp = await httpClient.PostAsync($"api/Tasks/submit/{Uri.EscapeDataString(taskId)}", content: null, ct);
         return resp.IsSuccessStatusCode;
     }
 
@@ -43,12 +42,22 @@ public sealed class TaskApi: ITaskApi
 
         using var content = new MultipartFormDataContent();
         foreach (var path in photoPaths.Where(File.Exists))
-            content.Add(new StreamContent(File.OpenRead(path)), "files", Path.GetFileName(path));
+        {
+            var stream = File.OpenRead(path);
+            var part = new StreamContent(stream);
+            content.Add(part, "files", Path.GetFileName(path));
+        }
 
-        var resp = await httpClient.PostAsync($"api/tasks/{Uri.EscapeDataString(taskId)}/submit", content, ct);
+        var resp = await httpClient.PostAsync($"api/Tasks/submit/{Uri.EscapeDataString(taskId)}", content, ct);
         return resp.IsSuccessStatusCode;
     }
-
+    
+    public async Task<IReadOnlyList<TaskModel>> GetCompletedAsync(CancellationToken ct = default)
+    {
+        if (useStub) return [];
+        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>("api/Tasks/get_completed", ct);
+        return list ?? [];
+    }
 
     private static List<TaskModel> StubTasks()
     {

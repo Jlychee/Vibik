@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:components="clr-namespace:Vibik.Resources.Components"
              x:Class="Vibik.MainPage">
 
     <Grid BackgroundColor="{StaticResource NavySeal}">
@@ -85,6 +86,7 @@
                        FontSize="32"
                        FontAttributes="Bold"
                        TextColor="Black"
+                       HorizontalOptions="Center"
                        Margin="0,8,0,0"/>
 
                 <!-- Тумблер "показать выполненные" -->
@@ -100,7 +102,24 @@
                             ThumbColor="{StaticResource MilkChocolate}"
                             OnColor="{StaticResource LightYelloww}"/>
                 </Grid>
-
+                
+                <VerticalStackLayout Padding="24"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="CenterAndExpand"
+                                     Spacing="8"
+                                     IsVisible="{Binding NoTask}">
+                    <Label Text="Пока заданий нет"
+                           FontAttributes="Bold"
+                           FontSize="18"
+                           TextColor="Black"
+                           HorizontalOptions="Center"/>
+                    <Image Source="cat.svg" Aspect="AspectFit"></Image>
+                    <Label Text="Загляни позже"
+                           FontSize="18"
+                           Opacity="0.7"
+                           TextColor="Black"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
                 <!-- Хост карточек -->
                 <StackLayout x:Name="CardsHost"
                              Orientation="Vertical"
@@ -140,5 +159,9 @@
                              Clicked="OnProfileClicked"/>
             </Grid>
         </Frame>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Button Text="Поделиться последним логом" Clicked="OnShareLatestLogClicked" />
+        </VerticalStackLayout>
+
     </Grid>
 </ContentPage>

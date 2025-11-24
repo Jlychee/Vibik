@@ -101,6 +101,11 @@
                             Opacity="0.4" />
                 </Button.Shadow>
             </Button>
+            <VerticalStackLayout Padding="16" Spacing="12">
+                <Button Text="Поделиться последним логом" Clicked="OnShareLatestLogClicked" />
+            </VerticalStackLayout>
+
         </StackLayout>
+        
     </ContentPage.Content>
 </ContentPage>

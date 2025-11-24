@@ -58,4 +58,26 @@ public partial class LoginPage : ContentPage
         ErrorLabel.Text = message;
         ErrorLabel.IsVisible = true;
     }
+    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+    {
+        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
+        Directory.CreateDirectory(dir);
+
+        var last = Directory.GetFiles(dir, "*.log")
+            .OrderByDescending(f => f)   // имена вида vibik-YYYYMMDD.log или raw-http.log
+            .FirstOrDefault();
+
+        if (last is null)
+        {
+            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
+            return;
+        }
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Vibik log",
+            File  = new ShareFile(last)
+        });
+    }
+
 }

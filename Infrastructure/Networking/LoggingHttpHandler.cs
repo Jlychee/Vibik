@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text;
-using Microsoft.Maui.Storage;
 
 namespace Vibik.Utils;
 
@@ -14,20 +13,28 @@ public sealed class HttpLoggingHandler : DelegatingHandler
         var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
         Directory.CreateDirectory(dir);
         logFilePath = Path.Combine(dir, "raw-http.log");
-        
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var sb = new StringBuilder();
+
         sb.AppendLine($"[{DateTimeOffset.Now:O}] Request: {request.Method} {request.RequestUri}");
         AppendHeaders(sb, "RequestHeaders", request.Headers);
 
         if (request.Content is not null)
         {
             AppendHeaders(sb, "RequestContentHeaders", request.Content.Headers);
-            var body = await request.Content.ReadAsStringAsync(ct);
-            if (!string.IsNullOrWhiteSpace(body)) sb.AppendLine($"RequestContent: {body}");
+            try
+            {
+                var reqBody = await request.Content.ReadAsStringAsync(ct);
+                if (!string.IsNullOrWhiteSpace(reqBody))
+                    sb.AppendLine($"RequestContent: {reqBody}");
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"RequestContent read failed: {ex.Message}");
+            }
         }
 
         HttpResponseMessage response;
@@ -44,15 +51,25 @@ public sealed class HttpLoggingHandler : DelegatingHandler
 
         sb.AppendLine($"Response: {(int)response.StatusCode} {response.ReasonPhrase}");
         AppendHeaders(sb, "ResponseHeaders", response.Headers);
+
         if (response.Content is not null)
         {
             AppendHeaders(sb, "ResponseContentHeaders", response.Content.Headers);
-            var body = await response.Content.ReadAsStringAsync(ct);
-            if (!string.IsNullOrWhiteSpace(body)) sb.AppendLine($"ResponseContent: {body}");
+            try
+            {
+                var respBody = await response.Content.ReadAsStringAsync(ct);
+                if (!string.IsNullOrWhiteSpace(respBody))
+                    sb.AppendLine($"ResponseContent: {respBody}");
+            }
+            catch (Exception ex)
+            {
+                sb.AppendLine($"ResponseContent read failed: {ex.Message}");
+            }
         }
 
         sb.AppendLine(new string('-', 80));
         await AppendLogAsync(sb.ToString(), ct);
+
         return response;
     }
 
@@ -60,7 +77,8 @@ public sealed class HttpLoggingHandler : DelegatingHandler
     {
         if (!headers.Any()) return;
         b.AppendLine(title + ":");
-        foreach (var h in headers) b.AppendLine($"  {h.Key}: {string.Join(", ", h.Value)}");
+        foreach (var h in headers)
+            b.AppendLine($"  {h.Key}: {string.Join(", ", h.Value)}");
     }
 
     private async Task AppendLogAsync(string text, CancellationToken ct)

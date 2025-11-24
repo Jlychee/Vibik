@@ -18,3 +18,4 @@ public class AuthHeaderHandler(AuthService authService) : DelegatingHandler
         return await base.SendAsync(request, cancellationToken);
     }
 }
+    

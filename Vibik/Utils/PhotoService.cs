@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Shared.Models;
+using Task = Shared.Models.Task;
 
 namespace Utils;
 
@@ -70,9 +72,26 @@ public static class PhotoService
             .ToArray();
     }
 
+    // private static Task<List<string>> GetLocalPaths(TaskExtendedInfo extendedInfo)
+    // {
+    //     return Task.FromResult(extendedInfo.UserPhotos
+    //         .Select(p => p.Url)
+    //         .Where(p => !string.IsNullOrWhiteSpace(p))
+    //         .Where(p => IsLocalPath(p))
+    //         .Where(File.Exists)
+    //         .ToList());
+    // }
+
+    private static bool IsLocalPath(string urlOrPath)
+    {
+        if (Uri.TryCreate(urlOrPath, UriKind.Absolute, out var uri))
+            return !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        return true;
+    }
+
+
     private static string GetTaskDirectory(string taskKey) =>
         Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
-
 }
 
     

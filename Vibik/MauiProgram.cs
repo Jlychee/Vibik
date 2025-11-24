@@ -1,7 +1,11 @@
-﻿using Core;
+﻿using Microsoft.Extensions.Logging;
+using Core;
 using Core.Application;
+using Core.Interfaces;
 using Infrastructure.Api;
-using Microsoft.Extensions.Logging;
+using Infrastructure.Networking;
+using Infrastructure.Services;
+using Vibik.Utils;
 
 namespace Vibik;
 
@@ -18,19 +22,55 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
-        
+
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddSingleton<LoginPage>();
         builder.Services.AddSingleton<RegistrationPage>();
         builder.Services.AddSingleton<ProfilePage>();
-        builder.Services.AddSingleton<HttpClient>();
 
-        builder.Services.AddSingleton<ITaskApi, TaskApi>();
-        builder.Services.AddSingleton<IUserApi, UserApi>();
-        builder.Services.AddSingleton<HttpClient>();
-        builder.Services.AddSingleton<IWeatherApi, WeatherService>();
+        builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddTransient<AuthHeaderHandler>();
+        builder.Services.AddTransient<HttpLoggingHandler>();
+        builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddTransient<AuthHeaderHandler>();
 
-        
+
+        var backendBaseUri =
+#if ANDROID
+            // new Uri("http://10.0.2.2:5000"); // ← локальный API на ПК через Android-эмулятор
+            //new Uri("http://158.160.105.104:5000");
+            new Uri("http://89.169.162.5:5000");
+#else
+            new Uri("http://89.169.162.5:5000");
+            //new Uri("http://158.160.105.104:5000");
+#endif
+        builder.Services.AddHttpClient<IWeatherApi, WeatherService>();
+
+        builder.Services
+            .AddHttpClient<ITaskApi, TaskApi>(client =>
+            {
+                client.BaseAddress = backendBaseUri;
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            })
+            .AddHttpMessageHandler<AuthHeaderHandler>()
+            .AddHttpMessageHandler<HttpLoggingHandler>();
+
+        builder.Services
+            .AddHttpClient<IUserApi, UserApi>(client =>
+            {
+                client.BaseAddress = backendBaseUri;
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            })
+            .AddHttpMessageHandler<AuthHeaderHandler>()
+            .AddHttpMessageHandler<HttpLoggingHandler>();
+        builder.Services
+            .AddHttpClient<IPhotoApi, PhotoApi>(client =>
+            {
+                client.BaseAddress = new Uri("http://89.169.162.5:5000");
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            })
+            .AddHttpMessageHandler<AuthHeaderHandler>()
+            .AddHttpMessageHandler<HttpLoggingHandler>();
 
 
 #if DEBUG

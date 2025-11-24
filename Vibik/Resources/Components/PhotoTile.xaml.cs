@@ -1,4 +1,4 @@
-
+using Utils;
 using System.Diagnostics;
 
 namespace Vibik.Resources.Components;
@@ -72,7 +72,7 @@ public partial class PhotoTile
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            tile.ImageView.Source = Utils.ImageSourceFinder.ResolveImage(path);
+            tile.ImageView.Source = ImageSourceFinder.ResolveImage(path);
             tile.ImageView.Opacity = 1;
             tile.ImageView.InvalidateMeasure();
             tile.RootFrame.InvalidateMeasure();
