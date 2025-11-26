@@ -49,8 +49,8 @@ public static class AppLogger
         }
     }
 
-    public static Task Info(string message)       => WriteAsync("INFO",  message);
-    public static Task Warn(string message)       => WriteAsync("WARN",  message);
-    public static Task Error(string message)      => WriteAsync("ERROR", message);
+    public static Task Info(string message) => WriteAsync("INFO",  message);
+    public static Task Warn(string message) => WriteAsync("WARN",  message);
+    public static Task Error(string message) => WriteAsync("ERROR", message);
     public static Task Error(string message, Exception ex) => WriteAsync("ERROR", message, ex);
 }

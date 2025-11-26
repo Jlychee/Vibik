@@ -107,7 +107,7 @@
                                      HorizontalOptions="Center"
                                      VerticalOptions="CenterAndExpand"
                                      Spacing="8"
-                                     IsVisible="{Binding NoTask}">
+                                     IsVisible="{Binding NoTasks}">
                     <Label Text="Пока заданий нет"
                            FontAttributes="Bold"
                            FontSize="18"
@@ -120,12 +120,21 @@
                            TextColor="Black"
                            HorizontalOptions="Center"/>
                 </VerticalStackLayout>
-                <!-- Хост карточек -->
-                <StackLayout x:Name="CardsHost"
-                             Orientation="Vertical"
-                             Spacing="12"
-                             Padding="0"
-                             HorizontalOptions="FillAndExpand"/>
+                <CollectionView ItemsSource="{Binding VisibleCards}"
+                                SelectionMode="None"
+                                HorizontalOptions="FillAndExpand">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical"
+                                           ItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <ContentView Content="{Binding .}" />
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
             </VerticalStackLayout>
         </ScrollView>
 

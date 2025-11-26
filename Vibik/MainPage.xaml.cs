@@ -6,6 +6,7 @@ using Shared.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
 using TaskModel = Shared.Models.Task;
+using Vibik.Utils;
 
 namespace Vibik;
 
@@ -15,13 +16,14 @@ public partial class MainPage
     private readonly Random random = new();
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
-    private readonly IUserApi? userApi;
+    private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
     private readonly IWeatherApi weatherApi;
 
     private int level;
     private int experience;
     private ImageSource? weatherImage;
+    private ObservableCollection<View> VisibleCards { get; } = new();
 
     public ImageSource? WeatherImage { get => weatherImage; set { weatherImage = value; OnPropertyChanged(); } }
     private string weatherTemp = "—";
@@ -29,7 +31,6 @@ public partial class MainPage
     private string weatherInfoAboutFallout = string.Empty;
     private WeatherInfo? lastWeather;
 
-    public ObservableCollection<TaskModel> Tasks { get; } = new();
 
     public int Level { get => level; set { level = value; OnPropertyChanged(); } }
     public int Experience { get => experience; set { experience = value; OnPropertyChanged(); } }
@@ -60,7 +61,7 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi? userApi, LoginPage loginPage, IWeatherApi weatherApi)
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
     {
         InitializeComponent();
         BindingContext = this;
@@ -69,20 +70,7 @@ public partial class MainPage
         this.weatherApi = weatherApi;
         this.loginPage = loginPage;
     }
-
-    private void UpdateWeatherIcon(string condition)
-    {
-        var normalized = condition.ToLowerInvariant();
-        WeatherImage = normalized switch
-        {
-            "clear" => ImageSource.FromFile("sunny_weather.svg"),
-            "clouds" => ImageSource.FromFile("cloudy_weather.svg"),
-            "rain" or "drizzle" => ImageSource.FromFile("rain_weather.svg"),
-            "snow" => ImageSource.FromFile("snow_weather.svg"),
-            "thunderstorm" => ImageSource.FromFile("storm_weather.svg"),
-            _ => null
-        };
-    }
+    
     private async Task LoadWeatherAsync()
     {
         try
@@ -95,7 +83,7 @@ public partial class MainPage
             if (lastWeather != null)
             {
                 ApplyWeather(lastWeather);
-                await DisplayAlert("Проблема с погодой", "Не удалось обновить погоду, показываем последнее значение.", "OK");
+                await AppAlerts.WeatherUpdateFailed();
             }
             else
             {
@@ -103,7 +91,7 @@ public partial class MainPage
                 WeatherInfoAboutSky = "Погода недоступна";
                 WeatherInfoAboutFallout = "Проверьте подключение к интернету";
                 WeatherImage = null;
-                await DisplayAlert("Ошибка", $"Не удалось загрузить погоду: {ex.Message}", "OK");
+                await AppAlerts.WeatherUploadFailed(ex.Message);
             }
         }
     }
@@ -115,23 +103,26 @@ public partial class MainPage
         WeatherInfoAboutSky = string.IsNullOrWhiteSpace(weather.Description)
             ? weather.Condition
             : weather.Description;
-        WeatherInfoAboutFallout = weather.Condition.ToLowerInvariant() switch
-        {
-            "rain" or "drizzle" => "Возможны осадки",
-            "snow" => "Возможен снег",
-            "thunderstorm" => "Вероятна гроза",
-            _ => "Осадков не ожидается"
-        };
-        UpdateWeatherIcon(weather.Condition);
+        WeatherInfoAboutFallout = WeatherUtils.BuildWeatherInfoAboutFallout(weather);
+        var normalized = weather.Condition.ToLowerInvariant();
+        WeatherImage = WeatherUtils.DefineWeatherImage(normalized);
+
     }
+    
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await LoadUserAsync();
-        await LoadWeatherAsync();
-        if (taskLoaded) return;
-        await LoadTasksAsync();
-        taskLoaded = true;
+
+        var userTask = LoadUserAsync();
+        var weatherTask = LoadWeatherAsync();
+
+        var tasksTask = Task.CompletedTask;
+        if (!taskLoaded)
+        {
+            tasksTask = LoadTasksAsync();
+            taskLoaded = true;
+        }
+        await Task.WhenAll(userTask, weatherTask, tasksTask);
     }
     
     private async Task LoadUserAsync()
@@ -169,107 +160,92 @@ public partial class MainPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ошибка", $"Не удалось загрузить задания: {ex.Message}", "OK");
-            Tasks.Clear();
+            await AppAlerts.ProfileUploadFailed(ex.Message);
+            VisibleCards.Clear();
+            NoTasks = true;
         }
     }
     
     private void ApplyFilter()
     {
-        var  filtered = allTasks.ToList();
+        var filtered = allTasks.ToList();
+        VisibleCards.Clear();
+
+        NoTasks = filtered.Count == 0;
+        if (NoTasks)
+            return;
+
         var count = filtered.Count;
+
         if (count == 0)
         {
-            noTasks = true;
+            NoTasks = true;
+            VisibleCards.Clear();
             return;
         }
-        
-        if (count > 4) 
-            count = 4;
-         //  фильтр по выполненным
-         // if (!ShowCompleted) { ... }
 
-         CardsHost.Children.Clear();
-        
-         for (var i = 0; i < count; i++)
-         {
-             var card = new TaskCard
-             {
-                 TaskApi = taskApi,
-                 Item = filtered[i],
-                 Title = filtered[i].Name,
-                 DaysPassed = filtered[i].DaysPassed(),
-                 Cost = filtered[i].Reward,
-                 SwapCost = filtered[i].Swap,
-                 // RefreshCommand = new Command(async () =>
-                 // {
-                 //     var ok = await taskApi.SwapTaskAsync(task.TaskId);
-                 //     if (!ok)
-                 //     {
-                 //         await DisplayAlert("Ошибка", "Не удалось сменить задание. Попробуйте позже.", "OK");
-                 //         return;
-                 //     }
-                 //
-                 //     await LoadTasksAsync();
-                 //     await LoadUserAsync();
-                 //     // тут менять кол-во монет 
-                 //     
-                 // }),
-                     
-                 HorizontalOptions = LayoutOptions.Fill
-             };
-             card.RefreshCommand = new Command(async () =>
-             {
-                 var current = card.Item;
-                 if (current is null)
-                     return;
-                 
-                 var confirmed = await DisplayAlert(
-                     "Сменить задание",
-                     $"Вы уверены, что хотите поменять задание за {card.SwapCost} опыта?",
-                     "Да",
-                     "Нет");
-        
-                 if (!confirmed)
-                     return;
-        
-                 var currentTaskIds = CardsHost.Children
-                     .OfType<TaskCard>()
-                     .Select(c => c.Item?.TaskId)
-                     .Where(id => !string.IsNullOrEmpty(id))
-                     .ToHashSet();
-        
-                 var candidates = allTasks
-                     .Where(t =>
-                         !t.Completed &&
-                         !currentTaskIds.Contains(t.TaskId))
-                     .ToList();
-        
-                 if (candidates.Count == 0)
-                 {
-                     await DisplayAlert("Новых заданий нет",
-                         "Сейчас нет заданий, которые вы ещё не делали и которых нет среди текущих.",
-                         "OK");
-                     return;
-                 }
-        
-                 var next = candidates[random.Next(candidates.Count)];
-        
-                 card.Item = next;
-                 card.Title = next.Name;
-                 card.DaysPassed = next.DaysPassed();
-                 card.Cost = next.Reward;
-                 card.SwapCost = next.Swap;
-             });
-        
-        
-        
-             // Если появится иконка у задач
-             // if (!string.IsNullOrWhiteSpace(task.Icon))
-             //     card.IconSource = ImageSource.FromFile(task.Icon);
-        
-             CardsHost.Children.Add(card);
+        if (count > 4)
+            count = 4;
+
+        VisibleCards.Clear();
+
+        for (var i = 0; i < count; i++)
+        {
+            var task = filtered[i];
+            var card = CreateTaskCard(task);
+            VisibleCards.Add(card);
         }
+    }
+
+    private TaskCard CreateTaskCard(TaskModel task)
+    {
+        var card = new TaskCard
+        {
+            TaskApi = taskApi,
+            Item = task,
+            Title = task.Name,
+            DaysPassed = task.DaysPassed(),
+            Cost = task.Reward,
+            SwapCost = task.Swap,
+            HorizontalOptions = LayoutOptions.Fill
+        };
+
+        card.RefreshCommand = new Command(async () =>
+        {
+            var current = card.Item;
+            if (current is null)
+                return;
+
+            var confirmed = await AppAlerts.ChangeTask(card.SwapCost);
+            if (!confirmed)
+                return;
+
+            var currentTaskIds = VisibleCards
+                .OfType<TaskCard>()
+                .Select(c => c.Item?.TaskId)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .ToHashSet();
+
+            var candidates = allTasks
+                .Where(t => !t.Completed && !currentTaskIds.Contains(t.TaskId))
+                .ToList();
+
+            if (candidates.Count == 0)
+            {
+                await AppAlerts.NoNewTasks();
+                return;
+            }
+
+            var next = candidates[random.Next(candidates.Count)];
+
+            card.Item = next;
+            card.Title = next.Name;
+            card.DaysPassed = next.DaysPassed();
+            card.Cost = next.Reward;
+            card.SwapCost = next.Swap;
+        });
+
+        return card;
     }
 
     private async void OnMapClicked(object sender, EventArgs e)
