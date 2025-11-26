@@ -30,7 +30,7 @@ public partial class LoginPage
 
         try
         {
-            var user = await userApi.LoginAsync(username, password);
+            var user = await userApi.GetUserAsync(username);
             if (user == null)
             {
                 ShowError("Не удалось войти. Проверьте данные.");
@@ -63,5 +63,27 @@ public partial class LoginPage
     {
         PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
         TogglePasswordVisibilityButton.Source = PasswordEntry.IsPassword ? "eye_show.svg" : "eye_hide.svg";
+    }
+    
+    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+    {
+        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
+        Directory.CreateDirectory(dir);
+
+        var last = Directory.GetFiles(dir, "*.log")
+            .OrderByDescending(f => f)
+            .FirstOrDefault();
+
+        if (last is null)
+        {
+            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
+            return;
+        }
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Vibik log",
+            File  = new ShareFile(last)
+        });
     }
 }
