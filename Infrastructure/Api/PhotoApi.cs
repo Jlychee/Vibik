@@ -2,11 +2,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Core.Interfaces;
 
-public sealed class PhotoApi : IPhotoApi
-{
-    private readonly HttpClient http;
-    public PhotoApi(HttpClient http) => http = this.http = http;
+using Infrastructure.Api;
 
+public class PhotoApi(HttpClient http) : IPhotoApi
+{
     public async Task<string?> UploadAsync(string filePath, CancellationToken ct = default)
     {
         await using var fs = File.OpenRead(filePath);
@@ -16,7 +15,7 @@ public sealed class PhotoApi : IPhotoApi
         using var form = new MultipartFormDataContent();
         form.Add(sc, "File", Path.GetFileName(filePath));
 
-        using var resp = await http.PostAsync("photos/upload", form, ct);
+        using var resp = await http.PostAsync(ApiRoutes.UploadPhoto, form, ct);
         if (!resp.IsSuccessStatusCode) return null;
 
         try

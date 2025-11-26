@@ -35,7 +35,7 @@ public partial class RegistrationPage
                 return;
             }
 
-            var user = await userApi.RegisterAsync(username, displayName, password);
+            var user = await userApi.RegisterAsync(username, password, displayName);
             if (user == null)
             {
                 ShowError("Не удалось создать аккаунт.");

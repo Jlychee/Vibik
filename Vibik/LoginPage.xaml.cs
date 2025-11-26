@@ -34,7 +34,7 @@ public partial class LoginPage
         {
             await AppLogger.Info($"Попытка логина: '{username}'");
 
-            var user = await userApi!.GetUserAsync(username);
+            var user = await userApi!.LoginAsync(username, password);
             if (user == null)
             {
                 await AppLogger.Warn($"Неудачный логин: пользователь '{username}' не найден (заглушка).");
@@ -42,10 +42,9 @@ public partial class LoginPage
                 return;
             }
 
-            Preferences.Set("current_user", user.Username);
-            Preferences.Set("display_name", user.DisplayName);
+            Preferences.Set("current_user", username);
 
-            await AppLogger.Info($"Успешный логин: '{user.Username}'");
+            await AppLogger.Info($"Успешный логин: '{username}'");
 
             Application.Current!.MainPage = new AppShell();
         }

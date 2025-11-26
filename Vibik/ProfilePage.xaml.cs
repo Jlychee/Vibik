@@ -84,8 +84,7 @@ public partial class ProfilePage
             }
 
             Username = user.Username;
-            var savedDisplayName = Preferences.Get("current_user", "");
-            DisplayName = savedDisplayName;
+            DisplayName = user.DisplayName;
             Level = user.Level;
             Experience = user.Experience;
 

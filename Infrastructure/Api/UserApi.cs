@@ -8,7 +8,7 @@ public class UserApi: IUserApi
 {
     private readonly HttpClient httpClient;
     private readonly bool useStub;
-    public UserApi(HttpClient httpClient, bool useStub = true)
+    public UserApi(HttpClient httpClient, bool useStub = false)
     {
         this.httpClient = httpClient;
         this.useStub = useStub;
@@ -17,7 +17,7 @@ public class UserApi: IUserApi
     {
         if (useStub) return StubUser(userId);
         return await httpClient.GetFromJsonAsync<User>(
-            ApiRoutes.UserById(userId), 
+            ApiRoutes.UserById(), 
             ct);
     }
 
@@ -33,13 +33,13 @@ public class UserApi: IUserApi
         return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
     }
 
-    public async Task<User?> RegisterAsync(string username, string displayName, string password, CancellationToken ct = default)
+    public async Task<User?> RegisterAsync(string username, string password, string displayName, CancellationToken ct = default)
     {
         if (useStub) return StubUser(username, displayName);
 
         var response = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserRegister,
-            new RegisterRequest(username, displayName, password), 
+            new RegisterRequest(username, password,displayName), 
             ct);
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
