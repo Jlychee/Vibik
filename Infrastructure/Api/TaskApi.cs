@@ -19,20 +19,24 @@ public sealed class TaskApi: ITaskApi
     public async Task<IReadOnlyList<TaskModel>> GetTasksAsync(CancellationToken ct = default)
     {
         if (useStub) return StubTasks();
-        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>("api/Tasks/get_all", ct);
+        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>(
+            ApiRoutes.AllTasks, 
+            ct);
         return list ?? [];
     }
 
     public async Task<TaskModel?> GetTaskAsync(string taskId, CancellationToken ct = default)
     {
         if (useStub) return StubTasks().FirstOrDefault(t => t.TaskId == taskId);
-        return await httpClient.GetFromJsonAsync<TaskModel>($"api/Tasks/get_task/{Uri.EscapeDataString(taskId)}", ct);
+        return await httpClient.GetFromJsonAsync<TaskModel>(
+            ApiRoutes.TaskById(taskId),
+            ct);
     }
 
     public async Task<bool> SwapTaskAsync(string taskId, CancellationToken ct = default)
     {
         if (useStub) return true;
-        var resp = await httpClient.PostAsync($"api/Tasks/submit/{Uri.EscapeDataString(taskId)}", content: null, ct);
+        var resp = await httpClient.PostAsync(ApiRoutes.SubmitTask(taskId), content: null, ct);
         return resp.IsSuccessStatusCode;
     }
 
@@ -48,14 +52,14 @@ public sealed class TaskApi: ITaskApi
             content.Add(part, "files", Path.GetFileName(path));
         }
 
-        var resp = await httpClient.PostAsync($"api/Tasks/submit/{Uri.EscapeDataString(taskId)}", content, ct);
+        var resp = await httpClient.PostAsync(ApiRoutes.SubmitTask(taskId), content, ct);
         return resp.IsSuccessStatusCode;
     }
     
     public async Task<IReadOnlyList<TaskModel>> GetCompletedAsync(CancellationToken ct = default)
     {
         if (useStub) return [];
-        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>("api/Tasks/get_completed", ct);
+        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>(ApiRoutes.CompletedTasks, ct);
         return list ?? [];
     }
 

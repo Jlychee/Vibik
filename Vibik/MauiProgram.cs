@@ -31,21 +31,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<AuthService>();
         builder.Services.AddTransient<AuthHeaderHandler>();
         builder.Services.AddTransient<HttpLoggingHandler>();
-        builder.Services.AddSingleton<AuthService>();
-        builder.Services.AddTransient<AuthHeaderHandler>();
 
 
         var backendBaseUri =
 #if ANDROID
-            // new Uri("http://10.0.2.2:5000"); // ← локальный API на ПК через Android-эмулятор
             //new Uri("http://158.160.105.104:5000");
             new Uri("http://89.169.162.5:5000");
 #else
             new Uri("http://89.169.162.5:5000");
             //new Uri("http://158.160.105.104:5000");
 #endif
-        builder.Services.AddHttpClient<IWeatherApi, WeatherService>();
-
         builder.Services
             .AddHttpClient<ITaskApi, TaskApi>(client =>
             {
@@ -66,7 +61,15 @@ public static class MauiProgram
         builder.Services
             .AddHttpClient<IPhotoApi, PhotoApi>(client =>
             {
-                client.BaseAddress = new Uri("http://89.169.162.5:5000");
+                client.BaseAddress = backendBaseUri;
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            })
+            .AddHttpMessageHandler<AuthHeaderHandler>()
+            .AddHttpMessageHandler<HttpLoggingHandler>();
+        builder.Services
+            .AddHttpClient<IWeatherApi, WeatherApi>(client =>
+            {
+                client.BaseAddress = backendBaseUri;
                 client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
             })
             .AddHttpMessageHandler<AuthHeaderHandler>()

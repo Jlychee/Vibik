@@ -4,7 +4,7 @@ namespace Vibik;
 
 public partial class ProfilePage
 {
-    private readonly IUserApi userApi;
+    private readonly IUserApi? userApi;
     private readonly LoginPage loginPage;
 
     private string displayName = string.Empty;
@@ -49,7 +49,7 @@ public partial class ProfilePage
         set { placesCount = value; OnPropertyChanged(); }
     }
 
-    public ProfilePage(IUserApi userApi, LoginPage loginPage)
+    public ProfilePage(IUserApi? userApi, LoginPage loginPage)
     {
         InitializeComponent();
         this.userApi = userApi;

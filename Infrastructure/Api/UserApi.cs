@@ -11,20 +11,24 @@ public class UserApi: IUserApi
     public UserApi(HttpClient httpClient, bool useStub = true)
     {
         this.httpClient = httpClient;
-        httpClient.BaseAddress = new Uri("http://localhost:5000");
         this.useStub = useStub;
     }
     public async Task<User?> GetUserAsync(string userId, CancellationToken ct = default)
     {
         if (useStub) return StubUser(userId);
-        return await httpClient.GetFromJsonAsync<User>($"api/users/{Uri.EscapeDataString(userId)}", ct);
+        return await httpClient.GetFromJsonAsync<User>(
+            ApiRoutes.UserById(userId), 
+            ct);
     }
 
     public async Task<User?> LoginAsync(string username, string password, CancellationToken ct = default)
     {
         if (useStub) return StubUser(username);
 
-        var response = await httpClient.PostAsJsonAsync("api/users/login", new LoginRequest(username, password), ct);
+        var response = await httpClient.PostAsJsonAsync(
+            ApiRoutes.UserLogin,
+            new LoginRequest(username, password), 
+            ct);
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
     }
@@ -33,7 +37,10 @@ public class UserApi: IUserApi
     {
         if (useStub) return StubUser(username, displayName);
 
-        var response = await httpClient.PostAsJsonAsync("api/users/register", new RegisterRequest(username, displayName, password), ct);
+        var response = await httpClient.PostAsJsonAsync(
+            ApiRoutes.UserRegister,
+            new RegisterRequest(username, displayName, password), 
+            ct);
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
     }
@@ -49,6 +56,6 @@ public class UserApi: IUserApi
         };
     }
     
-    private sealed record LoginRequest(string Username, string Password);
-    private sealed record RegisterRequest(string Username, string DisplayName, string Password);
+    private record LoginRequest(string Username, string Password);
+    private record RegisterRequest(string Username, string DisplayName, string Password);
 }

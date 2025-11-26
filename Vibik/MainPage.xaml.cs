@@ -11,11 +11,11 @@ namespace Vibik;
 
 public partial class MainPage
 {
-    private bool taskLoaded = false;
+    private bool taskLoaded;
     private readonly Random random = new();
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
-    private readonly IUserApi userApi;
+    private readonly IUserApi? userApi;
     private readonly LoginPage loginPage;
     private readonly IWeatherApi weatherApi;
 
@@ -60,7 +60,7 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
+    public MainPage(ITaskApi taskApi, IUserApi? userApi, LoginPage loginPage, IWeatherApi weatherApi)
     {
         InitializeComponent();
         BindingContext = this;
@@ -287,27 +287,4 @@ public partial class MainPage
     {
         await Navigation.PushAsync(new ProfilePage(userApi, loginPage));
     }
-
-    private async void OnShareLatestLogClicked(object sender, EventArgs e)
-    {
-        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
-        Directory.CreateDirectory(dir);
-
-        var last = Directory.GetFiles(dir, "*.log")
-            .OrderByDescending(f => f)   // имена вида vibik-YYYYMMDD.log или raw-http.log
-            .FirstOrDefault();
-
-        if (last is null)
-        {
-            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
-            return;
-        }
-
-        await Share.Default.RequestAsync(new ShareFileRequest
-        {
-            Title = "Vibik log",
-            File  = new ShareFile(last)
-        });
-    }
-
 }   

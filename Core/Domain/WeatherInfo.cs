@@ -7,9 +7,5 @@ public class WeatherInfo
     public string Condition { get; init; } = string.Empty;
 
     public string Description { get; init; } = string.Empty;
-
-    public string IconCode { get; init; } = string.Empty;
-
-    public DateTimeOffset RetrievedAt { get; init; } = DateTimeOffset.UtcNow;
 }
 

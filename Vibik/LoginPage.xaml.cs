@@ -2,15 +2,15 @@ using Core.Application;
 
 namespace Vibik;
 
-public partial class LoginPage : ContentPage
+public partial class LoginPage
 {
-    private readonly IUserApi userApi;
+    private readonly IUserApi? userApi;
 
-    public static IUserApi UserApi { get; set; }
+    public static IUserApi? UserApi { get; set; }
 
     public LoginPage() : this(UserApi) { }
 
-    public LoginPage(IUserApi userApi)
+    public LoginPage(IUserApi? userApi)
     {
         InitializeComponent();
         this.userApi = userApi;
@@ -20,7 +20,7 @@ public partial class LoginPage : ContentPage
     {
         ErrorLabel.IsVisible = false;
         var username = UsernameEntry.Text?.Trim() ?? string.Empty;
-        var password = PasswordEntry.Text ?? string.Empty;
+        var password = PasswordEntry.Text;
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
@@ -38,7 +38,7 @@ public partial class LoginPage : ContentPage
             }
 
             Preferences.Set("current_user", user.Username);
-            Preferences.Set("display_name", user.DisplayName ?? user.Username);
+            Preferences.Set("display_name", user.DisplayName);
 
             Application.Current!.MainPage = new AppShell();
         }
@@ -58,26 +58,10 @@ public partial class LoginPage : ContentPage
         ErrorLabel.Text = message;
         ErrorLabel.IsVisible = true;
     }
-    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+
+    private void OnTogglePasswordVisibilityClicked(object? sender, EventArgs e)
     {
-        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
-        Directory.CreateDirectory(dir);
-
-        var last = Directory.GetFiles(dir, "*.log")
-            .OrderByDescending(f => f)   // имена вида vibik-YYYYMMDD.log или raw-http.log
-            .FirstOrDefault();
-
-        if (last is null)
-        {
-            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
-            return;
-        }
-
-        await Share.Default.RequestAsync(new ShareFileRequest
-        {
-            Title = "Vibik log",
-            File  = new ShareFile(last)
-        });
+        PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
+        TogglePasswordVisibilityButton.Source = PasswordEntry.IsPassword ? "eye_show.svg" : "eye_hide.svg";
     }
-
 }

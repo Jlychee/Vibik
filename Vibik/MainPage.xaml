@@ -159,9 +159,5 @@
                              Clicked="OnProfileClicked"/>
             </Grid>
         </Frame>
-        <VerticalStackLayout Padding="16" Spacing="12">
-            <Button Text="Поделиться последним логом" Clicked="OnShareLatestLogClicked" />
-        </VerticalStackLayout>
-
     </Grid>
 </ContentPage>

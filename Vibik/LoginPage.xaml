@@ -23,6 +23,7 @@
                     <Entry x:Name="UsernameEntry"
                            Placeholder="Логин"
                            FontSize="20"
+                           MaxLength="50" 
                            TextColor="Black"
                            PlaceholderColor="#A3A3A3"
                            BackgroundColor="Transparent"
@@ -47,10 +48,21 @@
                            Placeholder="Пароль"
                            IsPassword="True"
                            FontSize="20"
+                           MaxLength="25" 
                            TextColor="Black"
                            PlaceholderColor="#A3A3A3"
                            BackgroundColor="Transparent"
                            ClearButtonVisibility="WhileEditing" />
+                    <ImageButton
+                        x:Name="TogglePasswordVisibilityButton"
+                        Source="eye_hide.png"
+                        Clicked="OnTogglePasswordVisibilityClicked"
+                        MaximumHeightRequest="24"
+                        MaximumWidthRequest="24"
+                        WidthRequest="15"
+                        HeightRequest="15"
+                        VerticalOptions="Center" 
+                        HorizontalOptions="End"/>
                 </StackLayout>
 
                 <BoxView Grid.Row="1"
@@ -88,11 +100,6 @@
                     FontSize="18"
                     HorizontalOptions="FillAndExpand">
             </Button>
-            <VerticalStackLayout Padding="16" Spacing="12">
-                <Button Text="Поделиться последним логом" Clicked="OnShareLatestLogClicked" />
-            </VerticalStackLayout>
-
         </StackLayout>
-        
     </ContentPage.Content>
 </ContentPage>
