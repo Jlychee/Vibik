@@ -1,20 +1,19 @@
 using Core.Application;
+using Infrastructure.Services;
 using Vibik.Utils;
 
 namespace Vibik;
 
 public partial class LoginPage
 {
-    private readonly IUserApi? userApi;
+    private readonly IUserApi userApi;
+    private readonly AuthService authService;
 
-    public static IUserApi? UserApi { get; set; }
-
-    public LoginPage() : this(UserApi) { }
-
-    public LoginPage(IUserApi? userApi)
+    public LoginPage(IUserApi userApi, AuthService authService)
     {
         InitializeComponent();
         this.userApi = userApi;
+        this.authService = authService;
     }
 
     private async void OnLoginClicked(object sender, EventArgs e)
@@ -33,17 +32,17 @@ public partial class LoginPage
         try
         {
             await AppLogger.Info($"Попытка логина: '{username}'");
+            var tokens = await userApi.LoginAsync(username, password);
 
-            var user = await userApi!.LoginAsync(username, password);
-            if (user == null)
+            if (tokens == null)
             {
                 await AppLogger.Warn($"Неудачный логин: пользователь '{username}' не найден (заглушка).");
                 ShowError("Не удалось войти. Проверьте данные.");
                 return;
             }
 
+            await authService.SetTokensAsync(tokens.AccessToken, tokens.RefreshToken);
             Preferences.Set("current_user", username);
-
             await AppLogger.Info($"Успешный логин: '{username}'");
 
             Application.Current!.MainPage = new AppShell();
@@ -71,7 +70,7 @@ public partial class LoginPage
         PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
         TogglePasswordVisibilityButton.Source = PasswordEntry.IsPassword ? "eye_show.svg" : "eye_hide.svg";
     }
-    
+
     private async void OnShareLatestLogClicked(object sender, EventArgs e)
     {
         var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
@@ -90,7 +89,7 @@ public partial class LoginPage
         await Share.Default.RequestAsync(new ShareFileRequest
         {
             Title = "Vibik log",
-            File  = new ShareFile(last)
+            File = new ShareFile(last)
         });
     }
 }

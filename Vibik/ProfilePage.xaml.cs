@@ -1,59 +1,92 @@
 using Core.Application;
+using Infrastructure.Services;
 
 namespace Vibik;
 
 public partial class ProfilePage
 {
-    private readonly IUserApi? userApi;
+    private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
+    private readonly AuthService authService;
 
     private string displayName = string.Empty;
+
     public string DisplayName
     {
         get => displayName;
-        set { displayName = value; OnPropertyChanged(); }
+        set
+        {
+            displayName = value;
+            OnPropertyChanged();
+        }
     }
 
     private string username = string.Empty;
+
     public string Username
     {
         get => username;
-        set { username = value; OnPropertyChanged(); }
+        set
+        {
+            username = value;
+            OnPropertyChanged();
+        }
     }
 
     private int level;
+
     public int Level
     {
         get => level;
-        set { level = value; OnPropertyChanged(); }
+        set
+        {
+            level = value;
+            OnPropertyChanged();
+        }
     }
 
     private int experience;
+
     public int Experience
     {
         get => experience;
-        set { experience = value; OnPropertyChanged(); }
+        set
+        {
+            experience = value;
+            OnPropertyChanged();
+        }
     }
 
     private int completedTasks;
+
     public int CompletedTasks
     {
         get => completedTasks;
-        set { completedTasks = value; OnPropertyChanged(); }
+        set
+        {
+            completedTasks = value;
+            OnPropertyChanged();
+        }
     }
 
     private int placesCount;
+
     public int PlacesCount
     {
         get => placesCount;
-        set { placesCount = value; OnPropertyChanged(); }
+        set
+        {
+            placesCount = value;
+            OnPropertyChanged();
+        }
     }
 
-    public ProfilePage(IUserApi? userApi, LoginPage loginPage)
+    public ProfilePage(IUserApi userApi, LoginPage loginPage, AuthService authService)
     {
         InitializeComponent();
         this.userApi = userApi;
         this.loginPage = loginPage;
+        this.authService = authService;
         BindingContext = this;
     }
 
@@ -70,7 +103,7 @@ public partial class ProfilePage
         if (string.IsNullOrWhiteSpace(userId))
         {
             await DisplayAlert("Ошибка", "Пользователь не найден. Зайдите заново.", "OK");
-            await Navigation.PushModalAsync(new NavigationPage(new LoginPage(userApi)));
+            await Navigation.PushModalAsync(new NavigationPage(loginPage));
             return;
         }
 
@@ -116,6 +149,7 @@ public partial class ProfilePage
 
     private void OnLogoutClicked(object? sender, EventArgs e)
     {
+        authService.Logout();
         Preferences.Remove("current_user");
         if (Application.Current != null) Application.Current.MainPage = new NavigationPage(loginPage);
     }

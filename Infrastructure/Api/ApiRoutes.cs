@@ -9,6 +9,7 @@ internal static class ApiRoutes
     public static string UserById() => $"{Users}/get_user";
 
     public static string UserLogin => $"{Auth}/login";
+    public static string AuthRefresh => $"{Auth}/refresh";
     public static string UserRegister => $"{Auth}/register";
 
     private const string Tasks = "api/Tasks";

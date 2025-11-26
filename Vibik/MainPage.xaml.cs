@@ -2,6 +2,7 @@
 using Core;
 using Core.Application;
 using Infrastructure.Api;
+using Infrastructure.Services;
 using Shared.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
@@ -18,6 +19,7 @@ public partial class MainPage
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
+    private readonly AuthService authService;
     private readonly IWeatherApi weatherApi;
 
     private int level;
@@ -38,6 +40,7 @@ public partial class MainPage
     public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
     private bool showCompleted;
+
     public bool ShowCompleted
     {
         get => showCompleted;
@@ -49,7 +52,9 @@ public partial class MainPage
             ApplyFilter();
         }
     }
+
     private bool noTasks;
+
     public bool NoTasks
     {
         get => noTasks;
@@ -61,7 +66,8 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi,
+        AuthService authService)
     {
         InitializeComponent();
         BindingContext = this;
@@ -69,6 +75,7 @@ public partial class MainPage
         this.userApi = userApi;
         this.weatherApi = weatherApi;
         this.loginPage = loginPage;
+        this.authService = authService;
     }
     
     private async Task LoadWeatherAsync()
@@ -108,7 +115,7 @@ public partial class MainPage
         WeatherImage = WeatherUtils.DefineWeatherImage(normalized);
 
     }
-    
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -124,7 +131,7 @@ public partial class MainPage
         }
         await Task.WhenAll(userTask, weatherTask, tasksTask);
     }
-    
+
     private async Task LoadUserAsync()
     {
         var userId = Preferences.Get("current_user", "");
@@ -165,7 +172,7 @@ public partial class MainPage
             NoTasks = true;
         }
     }
-    
+
     private void ApplyFilter()
     {
         var filtered = allTasks.ToList();
