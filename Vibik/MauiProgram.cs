@@ -38,8 +38,8 @@ public static class MauiProgram
             //new Uri("http://158.160.105.104:5000");
             new Uri("http://89.169.162.5:5000");
 #else
-            new Uri("http://158.160.105.104:5000");
-        //new Uri("http://89.169.162.5:5000");
+            //new Uri("https://158.160.105.104:5000");
+        new Uri("http://89.169.162.5:5000");
 #endif
         builder.Services.AddHttpClient("AuthRefresh", client =>
         {

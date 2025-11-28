@@ -268,6 +268,6 @@ public partial class MainPage
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new ProfilePage(userApi, loginPage));
+        await Navigation.PushAsync(new ProfilePage(userApi, loginPage,authService));
     }
 }   
