@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Core.Interfaces;
 
-using Infrastructure.Api;
+namespace Infrastructure.Api;
 
 public class PhotoApi(HttpClient http) : IPhotoApi
 {
@@ -35,10 +35,10 @@ public class PhotoApi(HttpClient http) : IPhotoApi
     private static string GetMime(string path) => Path.GetExtension(path).ToLowerInvariant() switch
     {
         ".jpg" or ".jpeg" => "image/jpeg",
-        ".png"             => "image/png",
-        ".webp"            => "image/webp",
-        ".heic"            => "image/heic",
-        _                  => "application/octet-stream"
+        ".png" => "image/png",
+        ".webp" => "image/webp",
+        ".heic" => "image/heic",
+        _ => "application/octet-stream"
     };
 
     private sealed record UploadResponse(string Result);

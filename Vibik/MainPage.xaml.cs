@@ -154,6 +154,13 @@ public partial class MainPage
         try
         {
             var tasks = await taskApi.GetTasksAsync();
+            await AppLogger.Info($"LoadTasksAsync: получено задач = {tasks.Count}");
+
+            foreach (var t in tasks)
+            {
+                await AppLogger.Info($"  task: id={t.TaskId}, name={t.Name}, reward={t.Reward}");
+            }
+
             allTasks.Clear();
             allTasks.AddRange(tasks);
             ApplyFilter();
@@ -168,33 +175,23 @@ public partial class MainPage
     
     private void ApplyFilter()
     {
-        var filtered = allTasks.ToList();
         VisibleCards.Clear();
+        var filtered = allTasks.ToList();
 
         NoTasks = filtered.Count == 0;
         if (NoTasks)
             return;
 
-        var count = filtered.Count;
-
-        if (count == 0)
-        {
-            NoTasks = true;
-            VisibleCards.Clear();
-            return;
-        }
-
-        if (count > 4)
-            count = 4;
-
-        VisibleCards.Clear();
+        var count = Math.Min(4, filtered.Count);
 
         for (var i = 0; i < count; i++)
         {
             var task = filtered[i];
             var card = CreateTaskCard(task);
-            VisibleCards.Add(card);
+            CardsHost.Children.Add(card);
         }
+        _ = AppLogger.Info($"ApplyFilter: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}");
+
     }
 
     private TaskCard CreateTaskCard(TaskModel task)
@@ -220,7 +217,7 @@ public partial class MainPage
             if (!confirmed)
                 return;
 
-            var currentTaskIds = VisibleCards
+            var currentTaskIds = CardsHost.Children
                 .OfType<TaskCard>()
                 .Select(c => c.Item?.TaskId)
                 .Where(id => !string.IsNullOrEmpty(id))

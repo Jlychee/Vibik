@@ -24,6 +24,7 @@ public static class MauiProgram
             });
 
         builder.Services.AddSingleton<MainPage>();
+        builder.Services.AddSingleton<TaskDetailsPage>();
         builder.Services.AddSingleton<LoginPage>();
         builder.Services.AddSingleton<RegistrationPage>();
         builder.Services.AddSingleton<ProfilePage>();

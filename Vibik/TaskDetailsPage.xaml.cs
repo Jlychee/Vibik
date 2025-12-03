@@ -21,6 +21,7 @@ public partial class TaskDetailsPage
         InitializeComponent();
         this.task = task ?? throw new ArgumentNullException(nameof(task));
         this.taskApi = taskApi ?? throw new ArgumentNullException(nameof(taskApi));
+        this.task.ExtendedInfo ??= new TaskExtendedInfo { UserPhotos = [] };
         this.task.ExtendedInfo.UserPhotos ??= [];
         BindingContext = new ViewModel(this.task);
         LoadSavedPhotos();
@@ -47,7 +48,7 @@ public partial class TaskDetailsPage
         }
 
         var localPaths = ExtendedInfo.UserPhotos
-            .Select(p => p.Url)
+            .Select(p => p.AbsolutePath)
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Where(IsLocalPath)
             .Where(File.Exists)
@@ -102,7 +103,7 @@ public partial class TaskDetailsPage
 
 
         var paths = ExtendedInfo.UserPhotos
-            .Select(p => p.Url)
+            .Select(p => p.AbsolutePath)
             .Where(u => !string.IsNullOrWhiteSpace(u))
             .ToList();
 
@@ -128,20 +129,20 @@ public partial class TaskDetailsPage
 
         ExtendedInfo.UserPhotos.RemoveAll(p =>
         {
-            if (string.IsNullOrWhiteSpace(p.Url)) return false;
-            if (!IsLocalPath(p.Url)) return false;
-            return !File.Exists(p.Url);
+            if (string.IsNullOrWhiteSpace(p.AbsolutePath)) return false;
+            if (!IsLocalPath(p.AbsolutePath)) return false;
+            return !File.Exists(p.AbsolutePath);
         });
 
         var existing = ExtendedInfo.UserPhotos
-            .Where(p => !string.IsNullOrWhiteSpace(p.Url))
-            .Select(p => p.Url)
+            .Where(p => !string.IsNullOrWhiteSpace(p.AbsolutePath))
+            .Select(p => p.AbsolutePath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var path in saved.Where(File.Exists))
         {
             if (existing.Add(path))
-                ExtendedInfo.UserPhotos.Add(new PhotoModel { Url = path });
+                ExtendedInfo.UserPhotos.Add(new Uri(path));
         }
     }
 
@@ -200,12 +201,12 @@ public partial class TaskDetailsPage
                 if (newFile == null) return;
 
                 var newPath = await PhotoService.SaveFileResultAsync(newFile, TaskKey);
-                var idx = ExtendedInfo.UserPhotos.FindIndex(p => p.Url == path);
+                var idx = ExtendedInfo.UserPhotos.FindIndex(p => p.AbsolutePath == path);
                 if (idx >= 0)
                 {
-                    TryDeleteLocal(ExtendedInfo.UserPhotos[idx].Url);
+                    TryDeleteLocal(ExtendedInfo.UserPhotos[idx].AbsolutePath);
 
-                    ExtendedInfo.UserPhotos[idx] = new PhotoModel { Url = newPath };
+                    ExtendedInfo.UserPhotos[idx] = new Uri(newPath);
                     BuildPhotosGrid();
                 }
                 break;
@@ -216,7 +217,7 @@ public partial class TaskDetailsPage
                 var ok = await DisplayAlert("Удалить фото?", "Это действие необратимо.", "Удалить", "Отмена");
                 if (!ok) return;
 
-                var removed = ExtendedInfo.UserPhotos.RemoveAll(p => p.Url == path) > 0;
+                var removed = ExtendedInfo.UserPhotos.RemoveAll(p => p.AbsolutePath == path) > 0;
                 if (removed) TryDeleteLocal(path);
                 BuildPhotosGrid();
                 break;
@@ -240,7 +241,7 @@ public partial class TaskDetailsPage
 
             var savedPath = await PhotoService.SaveFileResultAsync(file, TaskKey);
 
-            ExtendedInfo.UserPhotos!.Add(new PhotoModel { Url = savedPath });
+            ExtendedInfo.UserPhotos!.Add(new Uri(savedPath));
             BuildPhotosGrid();
         }
         catch (FeatureNotSupportedException)

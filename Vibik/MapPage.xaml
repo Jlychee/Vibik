@@ -5,31 +5,18 @@
              xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
              x:Class="Vibik.MapPage"
              Title="Карта">
-    
-        <maps:Map />
-    
-    <!-- <ScrollView> -->
-    <!--     <VerticalStackLayout Spacing="20" Padding="30,40"> -->
-    <!--         <Label Text="УРа это карта"  -->
-    <!--                FontSize="28" -->
-    <!--                TextColor="{StaticResource MilkChocolate}" -->
-    <!--                HorizontalOptions="Center" /> -->
-    <!--          -->
-    <!--         <Image Source="dotnet_bot.png" -->
-    <!--                HeightRequest="200" -->
-    <!--                Aspect="AspectFit" /> -->
-    <!--          -->
-    <!--         <Label Text="чето там..." -->
-    <!--                FontSize="16" -->
-    <!--                TextColor="{StaticResource Gray600}" -->
-    <!--                HorizontalOptions="Center" /> -->
-    <!--          -->
-    <!--         <Button Text="Вернуться назад"  -->
-    <!--                 Clicked="OnBackClicked" -->
-    <!--                 BackgroundColor="{StaticResource MilkChocolate}" -->
-    <!--                 TextColor="{StaticResource White}" -->
-    <!--                 HorizontalOptions="Center" -->
-    <!--                 WidthRequest="200" /> -->
-    <!--     </VerticalStackLayout> -->
-    <!-- </ScrollView> -->
+        <Grid>
+            <maps:Map x:Name="MapControl"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"/>
+            <GraphicsView
+                x:Name="SnowView"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"
+                BackgroundColor="Red"
+                InputTransparent="True"></GraphicsView>
+            <Label></Label> 
+        </Grid>
+        
+
 </ContentPage>

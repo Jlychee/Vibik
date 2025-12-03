@@ -13,7 +13,7 @@ public sealed class ViewModel
         TaskName = string.IsNullOrWhiteSpace(task.Name) ? "Задание" : task.Name;
         Description = task.ExtendedInfo?.Description ?? string.Empty;
 
-        var example = task.ExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.Url;
+        var example = task.ExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.AbsolutePath;
         ExampleCollage = ImageSourceFinder.ResolveImage(example);
     }
 }
