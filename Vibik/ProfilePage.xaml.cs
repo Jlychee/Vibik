@@ -1,3 +1,4 @@
+using System.Net;
 using Core.Application;
 
 namespace Vibik;
@@ -70,7 +71,7 @@ public partial class ProfilePage
         if (string.IsNullOrWhiteSpace(userId))
         {
             await DisplayAlert("Ошибка", "Пользователь не найден. Зайдите заново.", "OK");
-            await Navigation.PushModalAsync(new NavigationPage(new LoginPage(userApi)));
+            Application.Current!.MainPage = new NavigationPage(loginPage);
             return;
         }
 
@@ -82,16 +83,17 @@ public partial class ProfilePage
                 await DisplayAlert("Ошибка", "Не удалось загрузить профиль.", "OK");
                 return;
             }
-
-            Username = user.Username;
-            DisplayName = user.DisplayName;
-            Level = user.Level;
-            Experience = user.Experience;
-
-            // #ЗАГЛУШКА
-            CompletedTasks = 0;
-            PlacesCount = 0;
         }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            Preferences.Remove("current_user");
+            Preferences.Remove("display_name");
+
+            await DisplayAlert("Сессия истекла", "Пожалуйста, войдите ещё раз.", "OK");
+
+            Application.Current!.MainPage = new NavigationPage(loginPage);
+        }
+
         catch (Exception ex)
         {
             await DisplayAlert("Ошибка", $"Не удалось загрузить профиль: {ex.Message}", "OK");
