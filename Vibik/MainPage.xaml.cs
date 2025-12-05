@@ -2,6 +2,7 @@
 using Core;
 using Core.Application;
 using Infrastructure.Api;
+using Infrastructure.Services;
 using Shared.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
@@ -19,6 +20,8 @@ public partial class MainPage
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
     private readonly IWeatherApi weatherApi;
+    private readonly IAuthService authService;
+
 
     private int level;
     private int experience;
@@ -61,7 +64,7 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi)
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi, IAuthService authService)
     {
         InitializeComponent();
         BindingContext = this;
@@ -69,6 +72,7 @@ public partial class MainPage
         this.userApi = userApi;
         this.weatherApi = weatherApi;
         this.loginPage = loginPage;
+        this.authService = authService;
     }
     
     private async Task LoadWeatherAsync()
@@ -108,11 +112,28 @@ public partial class MainPage
         WeatherImage = WeatherUtils.DefineWeatherImage(normalized);
 
     }
-    
+
+    private async Task<bool> EnsureAuthorizedAsync()
+    {
+        var userId = Preferences.Get("current_user", "");
+        await AppLogger.Info($"Current user: {userId}, {authService.GetCurrentUser() ?? "<неизвестен>"}");
+
+    var token = await authService.GetAccessTokenAsync();
+        await AppLogger.Info($"Access token: {token}, {await authService.GetAccessTokenAsync() ?? "<null>"}");
+        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token)) return true;
+        return false;
+
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
+        if (await EnsureAuthorizedAsync())
+        {
+            AppLogger.Warn("пользователь не авторизован");
+            //Navigation.PushModalAsync(new NavigationPage(loginPage));
+            return;
+        }
         var userTask = LoadUserAsync();
         var weatherTask = LoadWeatherAsync();
 

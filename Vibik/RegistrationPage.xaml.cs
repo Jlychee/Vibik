@@ -1,25 +1,33 @@
 using Core.Application;
+using Infrastructure.Services;
+using Vibik.Utils;
 
 namespace Vibik;
 
 public partial class RegistrationPage
 {
     private readonly IUserApi userApi;
+    private readonly IAuthService? authService;
     
-    public RegistrationPage(IUserApi userApi)
+    public RegistrationPage(IUserApi userApi, IAuthService? authService)
     {
         InitializeComponent();
         this.userApi = userApi;
+        this.authService = authService;
     }
 
     private async void OnRegisterClicked(object sender, EventArgs e)
     {
         ErrorLabel.IsVisible = false;
+        
         var username = UsernameEntry.Text?.Trim() ?? string.Empty;
         var displayName = DisplayNameEntry.Text?.Trim() ?? string.Empty;
         var password = PasswordEntry.Text;
         var repeatPassword = RepeatPasswordEntry.Text;
-        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        
+        if (string.IsNullOrWhiteSpace(username) || 
+            string.IsNullOrWhiteSpace(password) ||
+            string.IsNullOrWhiteSpace(displayName))
         {
             ShowError("Заполните имя пользователя и пароль.");
             return;
@@ -27,6 +35,19 @@ public partial class RegistrationPage
 
         try
         {
+            await AppLogger.Info($"Регистрация нового пользователя: '{username}'");
+            var login = await userApi.RegisterAsync(username, password, displayName);
+
+            if (login is null)
+            {
+                ShowError("Не удалось создать аккаунт.");
+                return;
+            }
+            if (authService is not null)
+            {
+                await authService.SetTokensAsync(login.AccessToken, login.RefreshToken, login.Username);
+            }
+
             if (password != repeatPassword)
             { 
                 ErrorLabel.Text = "Пароли разные";
@@ -34,21 +55,16 @@ public partial class RegistrationPage
 
                 return;
             }
-
-            var user = await userApi.RegisterAsync(username, password, displayName);
-            if (user == null)
-            {
-                ShowError("Не удалось создать аккаунт.");
-                return;
-            }
             
-            Preferences.Set("current_user", user.Username);
-            Preferences.Set("display_name", user.DisplayName);
+            Preferences.Set("current_user", login.Username);
+            Preferences.Set("display_name", login.DisplayName);
 
             Application.Current!.MainPage = new AppShell();
         }
         catch (Exception ex)
         {
+            await AppLogger.Error("Ошибка при регистрации", ex);
+
             ShowError(ex.Message);
         }
     }

@@ -29,7 +29,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<RegistrationPage>();
         builder.Services.AddSingleton<ProfilePage>();
 
-        builder.Services.AddSingleton<AuthService>();
+        builder.Services.AddSingleton<IAuthService, AuthService>();
         builder.Services.AddTransient<AuthHeaderHandler>();
         builder.Services.AddTransient<HttpLoggingHandler>();
 

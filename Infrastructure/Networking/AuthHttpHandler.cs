@@ -1,21 +1,30 @@
+using System.Net;
+using System.Net.Http.Headers;
 using Infrastructure.Services;
 
 namespace Infrastructure.Networking;
 
-public class AuthHeaderHandler(AuthService authService) : DelegatingHandler
+public sealed class AuthHeaderHandler(IAuthService authService) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
         var token = await authService.GetAccessTokenAsync();
-        if (!string.IsNullOrEmpty(token))
+
+        if (!string.IsNullOrWhiteSpace(token))
         {
             request.Headers.Authorization = 
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                new AuthenticationHeaderValue("Bearer", token);
         }
 
-        return await base.SendAsync(request, cancellationToken);
+        var response = await base.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            authService.Logout();
+        }
+
+        return response;
     }
 }
-    

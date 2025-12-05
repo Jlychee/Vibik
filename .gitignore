@@ -6,3 +6,4 @@ riderModule.iml
 /.env
 Infrastructure/.env
 weathersettings.json
+raw-http.log

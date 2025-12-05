@@ -8,7 +8,7 @@ public class UserApi: IUserApi
 {
     private readonly HttpClient httpClient;
     private readonly bool useStub;
-    public UserApi(HttpClient httpClient, bool useStub = true)
+    public UserApi(HttpClient httpClient, bool useStub = false)
     {
         this.httpClient = httpClient;
         this.useStub = useStub;
@@ -21,28 +21,62 @@ public class UserApi: IUserApi
             ct);
     }
 
-    public async Task<User?> LoginAsync(string username, string password, CancellationToken ct = default)
+    public async Task<LoginResponse?> LoginAsync(string username, string password, CancellationToken ct = default)
     {
-        if (useStub) return StubUser(username);
+        if (useStub) return new LoginResponse
+        {
+            Username = username,
+            DisplayName = username,
+            AccessToken = "stub-access-token",
+            RefreshToken = null
+        };
 
-        var response = await httpClient.PostAsJsonAsync(
+        var request = new
+        {
+            username,
+            password
+        };
+
+        var resp = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserLogin,
-            new LoginRequest(username, password), 
+            request,
             ct);
-        if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
+
+        if (!resp.IsSuccessStatusCode)
+            return null;
+
+        return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
     }
 
-    public async Task<User?> RegisterAsync(string username, string password, string displayName, CancellationToken ct = default)
+    public async Task<LoginResponse?> RegisterAsync(string username, string password, string displayName, CancellationToken ct = default)
     {
-        if (useStub) return StubUser(username, displayName);
+        if (useStub)
+        {
+            return new LoginResponse
+            {
+                Username = username,
+                DisplayName = displayName,
+                AccessToken = "stub-access-token",
+                RefreshToken = null
+            };
+        }
 
-        var response = await httpClient.PostAsJsonAsync(
+        var request = new
+        {
+            username,
+            password,
+            displayName
+        };
+
+        var resp = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserRegister,
-            new RegisterRequest(username, password,displayName), 
+            request,
             ct);
-        if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
+
+        if (!resp.IsSuccessStatusCode)
+            return null;
+
+        return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
     }
 
     private static User StubUser(string username, string? displayName = null)
