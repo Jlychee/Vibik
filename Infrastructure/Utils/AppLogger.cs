@@ -16,7 +16,10 @@ public static class AppLogger
     private static string GetLogFilePath()
     {
         if (logDirectory is null)
-            throw new InvalidOperationException("AppLogger is not initialized");
+        {
+            logDirectory = Path.Combine(FileSystem.AppDataDirectory, "logs");
+            Directory.CreateDirectory(logDirectory);
+        }
 
         var fileName = $"vibik-{DateTime.UtcNow:yyyyMMdd}.log";
         return Path.Combine(logDirectory, fileName);

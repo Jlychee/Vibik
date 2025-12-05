@@ -115,23 +115,25 @@ public partial class MainPage
 
     private async Task<bool> EnsureAuthorizedAsync()
     {
-        var userId = Preferences.Get("current_user", "");
-        await AppLogger.Info($"Current user: {userId}, {authService.GetCurrentUser() ?? "<неизвестен>"}");
+        var currentUser = authService.GetCurrentUser();
+        var legacyUser = Preferences.Get("current_user", string.Empty);
+        var userId = string.IsNullOrWhiteSpace(currentUser) ? legacyUser : currentUser;
+        await AppLogger.Info($"Current user: {userId}, {currentUser ?? "<неизвестен>"}");
 
-    var token = await authService.GetAccessTokenAsync();
-        await AppLogger.Info($"Access token: {token}, {await authService.GetAccessTokenAsync() ?? "<null>"}");
-        if (!string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token)) return true;
-        return false;
+        var token = await authService.GetAccessTokenAsync();
+        await AppLogger.Info($"Access token: {token ?? "<null>"}");
+
+        return !string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token);
 
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (await EnsureAuthorizedAsync())
+        if (!await EnsureAuthorizedAsync())
         {
-            AppLogger.Warn("пользователь не авторизован");
-            //Navigation.PushModalAsync(new NavigationPage(loginPage));
+            await AppLogger.Warn("пользователь не авторизован");
+            await Navigation.PushModalAsync(new NavigationPage(loginPage));
             return;
         }
         var userTask = LoadUserAsync();
@@ -148,7 +150,7 @@ public partial class MainPage
     
     private async Task LoadUserAsync()
     {
-        var userId = Preferences.Get("current_user", "");
+        var userId = authService.GetCurrentUser() ?? Preferences.Get("current_user", "");
         if (string.IsNullOrWhiteSpace(userId))
         {
             await Navigation.PushModalAsync(new NavigationPage(loginPage));
@@ -279,6 +281,6 @@ public partial class MainPage
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new ProfilePage(userApi, loginPage));
+        await Navigation.PushAsync(new ProfilePage(userApi, loginPage, authService));
     }
 }   

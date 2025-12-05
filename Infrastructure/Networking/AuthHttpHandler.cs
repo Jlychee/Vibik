@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using Infrastructure.Services;
+using Infrastructure.Utils;
 
 namespace Infrastructure.Networking;
 
@@ -22,7 +23,7 @@ public sealed class AuthHeaderHandler(IAuthService authService) : DelegatingHand
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            authService.Logout();
+            await AppLogger.Warn("API вернул 401 — токен не добавлен или протух. Пользователь остаётся в сессии для ручного входа.");
         }
 
         return response;

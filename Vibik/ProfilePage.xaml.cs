@@ -1,5 +1,6 @@
 using System.Net;
 using Core.Application;
+using Infrastructure.Services;
 
 namespace Vibik;
 
@@ -7,6 +8,8 @@ public partial class ProfilePage
 {
     private readonly IUserApi? userApi;
     private readonly LoginPage loginPage;
+    private readonly IAuthService? authService;
+
 
     private string displayName = string.Empty;
     public string DisplayName
@@ -50,11 +53,12 @@ public partial class ProfilePage
         set { placesCount = value; OnPropertyChanged(); }
     }
 
-    public ProfilePage(IUserApi? userApi, LoginPage loginPage)
+    public ProfilePage(IUserApi? userApi, LoginPage loginPage, IAuthService? authService)
     {
         InitializeComponent();
         this.userApi = userApi;
         this.loginPage = loginPage;
+        this.authService = authService;
         BindingContext = this;
     }
 
@@ -66,7 +70,7 @@ public partial class ProfilePage
 
     private async Task LoadUserAsync()
     {
-        var userId = Preferences.Get("current_user", "");
+        var userId = authService?.GetCurrentUser() ?? Preferences.Get("current_user", "");
 
         if (string.IsNullOrWhiteSpace(userId))
         {
@@ -83,6 +87,11 @@ public partial class ProfilePage
                 await DisplayAlert("Ошибка", "Не удалось загрузить профиль.", "OK");
                 return;
             }
+            Username = user.Username;
+            DisplayName = user.DisplayName;
+            Level = user.Level;
+            Experience = user.Experience;
+
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {

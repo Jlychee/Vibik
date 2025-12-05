@@ -48,6 +48,9 @@ public partial class LoginPage
                 ShowError("Не удалось войти. Проверьте логин и пароль.");
                 return;
             }
+            var normalizedUsername = string.IsNullOrWhiteSpace(result.Username)
+                ? username
+                : result.Username;
 
             if (authService is null)
             {
@@ -55,13 +58,13 @@ public partial class LoginPage
             }
             else
             {
-                await authService.SetTokensAsync(result.AccessToken, result.RefreshToken, result.Username);
+                await authService.SetTokensAsync(result.AccessToken, result.RefreshToken, normalizedUsername);
             }
+            Preferences.Set("current_user", normalizedUsername);
 
-            Preferences.Set("current_user", result.Username);
             Preferences.Set("display_name", result.DisplayName);
 
-            await AppLogger.Info($"Успешный логин: '{result.Username}'");
+            await AppLogger.Info($"Успешный логин: '{normalizedUsername}'");
 
             Application.Current!.MainPage = new AppShell();
 

@@ -10,7 +10,6 @@ public class AuthService : IAuthService
 
     public async Task SetTokensAsync(string accessToken, string? refreshToken, string username)
     {
-        // сохраняем юзернейм и в памяти, и в Preferences
         this.username = username;
         Preferences.Set(UsernameKey, username);
 
@@ -24,11 +23,9 @@ public class AuthService : IAuthService
 
     public async Task<string?> GetAccessTokenAsync()
     {
-        // если уже держим в памяти — возвращаем
         if (!string.IsNullOrWhiteSpace(accessToken))
             return accessToken;
 
-        // иначе пытаемся достать из хранилища
         accessToken = await TokenStorage.GetAccessTokenAsync();
         return accessToken;
     }
@@ -47,7 +44,6 @@ public class AuthService : IAuthService
         if (!string.IsNullOrWhiteSpace(username))
             return username;
 
-        // если ещё не читали в этом сеансе — достанем из Preferences
         username = Preferences.Get(UsernameKey, null);
         return username;
     }
