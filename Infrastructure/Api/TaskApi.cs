@@ -10,7 +10,7 @@ public sealed class TaskApi: ITaskApi
     private readonly HttpClient httpClient;
     private readonly bool useStub;
 
-    public TaskApi(HttpClient httpClient, bool useStub = false)
+    public TaskApi(HttpClient httpClient, bool useStub = true)
     { 
         this.httpClient = httpClient;
         this.useStub = useStub;

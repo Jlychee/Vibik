@@ -1,5 +1,8 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Core.Application;
+using Infrastructure.Services;
+using Infrastructure.Utils;
 using Shared.Models;
 
 namespace Infrastructure.Api;
@@ -27,7 +30,7 @@ public class UserApi: IUserApi
         {
             Username = username,
             DisplayName = username,
-            AccessToken = "stub-access-token",
+            AccessToken = null,
             RefreshToken = null
         };
 
@@ -56,7 +59,7 @@ public class UserApi: IUserApi
             {
                 Username = username,
                 DisplayName = displayName,
-                AccessToken = "stub-access-token",
+                AccessToken = null,
                 RefreshToken = null
             };
         }
@@ -72,11 +75,40 @@ public class UserApi: IUserApi
             ApiRoutes.UserRegister,
             request,
             ct);
-
+        
         if (!resp.IsSuccessStatusCode)
+        {
+            await AppLogger.Warn(
+                $"{{resp.IsSuccessStatusCode}}, {resp.StatusCode}, {resp.ReasonPhrase}, {resp.Content}");
             return null;
+        }
 
-        return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
+        var service = new AuthService();
+        var loginResponse = new LoginResponse
+        {
+            Username = username,
+            DisplayName = displayName,
+            AccessToken = service.GetAccessTokenAsync().ToString(),
+            RefreshToken = service.GetRefreshTokenAsync().ToString()
+        };
+
+
+        return loginResponse;
+    }
+
+    private static async Task<LoginResponse?> ReadLoginResponseAsync(HttpResponseMessage resp, CancellationToken ct)
+    {
+        try
+        {
+            if (resp.Content?.Headers.ContentLength == 0)
+                return null;
+
+            return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static User StubUser(string username, string? displayName = null)

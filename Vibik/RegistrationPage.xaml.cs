@@ -32,11 +32,19 @@ public partial class RegistrationPage
             ShowError("Заполните имя пользователя и пароль.");
             return;
         }
+        if (password != repeatPassword)
+        { 
+            ErrorLabel.Text = "Пароли разные";
+            ErrorLabel.IsVisible = true;
+
+            return;
+        }
 
         try
         {
             await AppLogger.Info($"Регистрация нового пользователя: '{username}'");
             var login = await userApi.RegisterAsync(username, password, displayName);
+            await AppLogger.Info($"есть ли логин: '{login}'");
 
             if (login is null)
             {
@@ -45,15 +53,7 @@ public partial class RegistrationPage
             }
             if (authService is not null)
             {
-                await authService.SetTokensAsync(login.AccessToken, login.RefreshToken, login.Username);
-            }
-
-            if (password != repeatPassword)
-            { 
-                ErrorLabel.Text = "Пароли разные";
-                ErrorLabel.IsVisible = true;
-
-                return;
+                await authService.SetTokensAsync( login.AccessToken, login.RefreshToken, login.Username);
             }
             
             Preferences.Set("current_user", login.Username);

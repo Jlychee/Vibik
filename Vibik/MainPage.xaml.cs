@@ -122,6 +122,7 @@ public partial class MainPage
 
         var token = await authService.GetAccessTokenAsync();
         await AppLogger.Info($"Access token: {token ?? "<null>"}");
+        await AppLogger.Info($"Refresh token: {await authService.GetRefreshTokenAsync()?? "<null>"}");
 
         return !string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token);
 

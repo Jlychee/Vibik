@@ -9,7 +9,7 @@ public class LoginResponse
     public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>Access-токен (JWT), которым будем ходить в API.</summary>
-    public string AccessToken { get; set; } = string.Empty;
+    public string? AccessToken { get; set; }
 
     /// <summary>Refresh-токен, если backend его выдаёт (может быть null).</summary>
     public string? RefreshToken { get; set; }

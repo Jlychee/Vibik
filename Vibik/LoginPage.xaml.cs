@@ -58,7 +58,7 @@ public partial class LoginPage
             }
             else
             {
-                await authService.SetTokensAsync(result.AccessToken, result.RefreshToken, normalizedUsername);
+                await authService.SetTokensAsync( result.AccessToken,  result.RefreshToken, normalizedUsername);
             }
             Preferences.Set("current_user", normalizedUsername);
 

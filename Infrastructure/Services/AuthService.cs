@@ -1,3 +1,5 @@
+using Infrastructure.Utils;
+
 namespace Infrastructure.Services;
 
 public class AuthService : IAuthService
@@ -19,6 +21,7 @@ public class AuthService : IAuthService
         await TokenStorage.SaveAccessTokenAsync(accessToken);
         if (!string.IsNullOrEmpty(refreshToken))
             await TokenStorage.SaveRefreshTokenAsync(refreshToken);
+        await AppLogger.Info($"accessToken {this.accessToken} refresh token {refreshToken}");
     }
 
     public async Task<string?> GetAccessTokenAsync()
