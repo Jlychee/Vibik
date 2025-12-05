@@ -8,4 +8,5 @@ public interface IUserApi
     Task<LoginResponse?> LoginAsync(string username, string password, CancellationToken ct = default);
 
     Task<LoginResponse?> RegisterAsync(string username, string password, string displayName, CancellationToken ct = default);
+    Task<LoginResponse?> RefreshAsync(string refreshToken, CancellationToken ct = default);
 }

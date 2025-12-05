@@ -7,4 +7,5 @@ public interface IAuthService
     Task<string?> GetRefreshTokenAsync();
     string? GetCurrentUser();
     void Logout();
+    Task<bool> TryRefreshTokensAsync(CancellationToken ct = default);
 }

@@ -1,7 +1,5 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using Core.Application;
-using Infrastructure.Services;
 using Infrastructure.Utils;
 using Shared.Models;
 
@@ -20,7 +18,7 @@ public class UserApi: IUserApi
     {
         if (useStub) return StubUser(userId);
         return await httpClient.GetFromJsonAsync<User>(
-            ApiRoutes.UserById(), 
+            ApiRoutes.User(), 
             ct);
     }
 
@@ -78,37 +76,30 @@ public class UserApi: IUserApi
         
         if (!resp.IsSuccessStatusCode)
         {
+            var body = await resp.Content.ReadAsStringAsync(ct);
             await AppLogger.Warn(
-                $"{{resp.IsSuccessStatusCode}}, {resp.StatusCode}, {resp.ReasonPhrase}, {resp.Content}");
+                $"{{resp.IsSuccessStatusCode}}, {resp.StatusCode}, {resp.ReasonPhrase}, {body}");
             return null;
         }
 
-        var service = new AuthService();
-        var loginResponse = new LoginResponse
-        {
-            Username = username,
-            DisplayName = displayName,
-            AccessToken = service.GetAccessTokenAsync().ToString(),
-            RefreshToken = service.GetRefreshTokenAsync().ToString()
-        };
+        await AppLogger.Info("Регистрация прошла, пытаемся залогиниться тем же логином и паролем...");
+        return await LoginAsync(username, password, ct);
 
-
-        return loginResponse;
     }
 
-    private static async Task<LoginResponse?> ReadLoginResponseAsync(HttpResponseMessage resp, CancellationToken ct)
+    public async Task<LoginResponse?> RefreshAsync(string refreshToken, CancellationToken ct = default)
     {
-        try
-        {
-            if (resp.Content?.Headers.ContentLength == 0)
-                return null;
-
-            return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
-        }
-        catch (JsonException)
-        {
+        if (useStub)
             return null;
-        }
+
+        var request = new { refreshToken };
+
+        var resp = await httpClient.PostAsJsonAsync(ApiRoutes.UserRefresh, request, ct);
+
+        if (!resp.IsSuccessStatusCode)
+            return null;
+
+        return await resp.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
     }
 
     private static User StubUser(string username, string? displayName = null)

@@ -1,3 +1,4 @@
+using Core.Application;
 using Infrastructure.Utils;
 
 namespace Infrastructure.Services;
@@ -7,8 +8,9 @@ public class AuthService : IAuthService
     private string? accessToken;
     private string? refreshToken;
     private string? username;
-
+    
     private const string UsernameKey = "username";
+
 
     public async Task SetTokensAsync(string accessToken, string? refreshToken, string username)
     {
@@ -60,4 +62,6 @@ public class AuthService : IAuthService
         TokenStorage.Clear();
         Preferences.Remove(UsernameKey);
     }
+
+    public async Task<bool> TryRefreshTokensAsync(CancellationToken ct = default) => await Task.FromResult(false);
 }

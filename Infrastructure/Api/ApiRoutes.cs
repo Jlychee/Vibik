@@ -6,10 +6,12 @@ internal static class ApiRoutes
     private const string Auth = "api/Auth";
 
     public static string UploadPhoto => "photos/upload";
-    public static string UserById() => $"{Users}/get_user";
+    public static string User() => $"{Users}/get_user";
 
     public static string UserLogin => $"{Auth}/login";
     public static string UserRegister => $"{Auth}/register";
+    public static string UserRefresh  => $"{Auth}/refresh";
+
 
     private const string Tasks = "api/Tasks";
 
