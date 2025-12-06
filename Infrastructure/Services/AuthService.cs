@@ -2,6 +2,7 @@
     using Core.Domain;
     using Core.Interfaces;
     using Infrastructure.Api;
+    using Infrastructure.Utils;
 
     namespace Infrastructure.Services;
 
@@ -52,13 +53,14 @@
             try
             {
                 var token = await GetRefreshTokenAsync();
+                await AppLogger.Info(token);
                 if (string.IsNullOrEmpty(token))
                     return null;
 
                 var client = httpClientFactory.CreateClient("AuthRefresh");
-                using var response = await client.PostAsJsonAsync(
+                using var response = await client.PostAsync(
                     ApiRoutes.AuthRefresh,
-                    new RefreshRequest(token),
+                    content: null,
                     ct);
 
                 if (!response.IsSuccessStatusCode)
@@ -67,7 +69,7 @@
                 var refreshed = await response.Content.ReadFromJsonAsync<LoginUserResponse>(cancellationToken: ct);
                 if (refreshed != null)
                     await SetTokensAsync(refreshed.AccessToken, refreshed.RefreshToken);
-
+                await AppLogger.Info(refreshed?.ToString());
                 return refreshed;
             }
             finally

@@ -2,6 +2,7 @@ using Infrastructure.Api;
 using System.Net;
 using System.Net.Http.Headers;
 using Core.Interfaces;
+using Infrastructure.Utils;
 
 namespace Infrastructure.Networking;
 
@@ -21,17 +22,17 @@ public class AuthHeaderHandler(IAuthService authService) : DelegatingHandler
             request.Headers.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
         }
-
+        await AppLogger.Warn("Я тут");
         var response = await base.SendAsync(request, cancellationToken);
         if (response.StatusCode != HttpStatusCode.Unauthorized ||
             refreshAttempted ||
             IsRefreshRequest(request))
             return response;
-
+        await AppLogger.Warn("Я тут 2");
         var refreshed = await authService.TryRefreshTokensAsync(cancellationToken);
         if (refreshed is null)
             return response;
-
+        await AppLogger.Warn("Я тут 3");
         response.Dispose();
 
         var retryRequest = await CloneRequestAsync(request, cancellationToken);
