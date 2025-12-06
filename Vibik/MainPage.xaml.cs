@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Core;
 using Core.Application;
+using Core.Interfaces;
 using Infrastructure.Api;
 using Infrastructure.Services;
 using Shared.Models;

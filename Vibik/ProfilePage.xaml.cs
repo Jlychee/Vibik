@@ -1,5 +1,6 @@
 using System.Net;
 using Core.Application;
+using Core.Interfaces;
 using Infrastructure.Services;
 
 namespace Vibik;

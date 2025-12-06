@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Core.Interfaces;
 using Infrastructure.Services;
 using Infrastructure.Utils;
 
