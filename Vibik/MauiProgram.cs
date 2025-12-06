@@ -31,6 +31,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuthService, AuthService>();
 
         builder.Services.AddTransient<AuthHeaderHandler>();
+        builder.Services.AddTransient<RefreshHeaderHandler>();
         builder.Services.AddTransient<HttpLoggingHandler>();
 
 
@@ -46,12 +47,7 @@ public static class MauiProgram
         {
             client.BaseAddress = backendBaseUri;
             client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-        });
-        builder.Services.AddHttpClient("AuthRefresh", client =>
-        {
-            client.BaseAddress = backendBaseUri;
-            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-        });
+        }).AddHttpMessageHandler<RefreshHeaderHandler>();
         builder.Services
             .AddHttpClient<ITaskApi, TaskApi>(client =>
             {
