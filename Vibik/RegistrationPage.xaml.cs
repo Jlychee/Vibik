@@ -52,10 +52,10 @@ public partial class RegistrationPage
                 ShowError("Не удалось создать аккаунт.");
                 return;
             }
-            if (authService is not null)
-            {
-                await authService.SetTokensAsync( login.AccessToken, login.RefreshToken, login.Username);
-            }
+            // if (authService is not null)
+            // {
+            //     await authService.SetTokensAsync( login., login.RefreshToken, login.Username);
+            // }
             
             Preferences.Set("current_user", login.Username);
             Preferences.Set("display_name", login.DisplayName);

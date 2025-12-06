@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Core;
 using Core.Application;
+using Core.Interfaces;
 using Infrastructure.Api;
 using Infrastructure.Services;
 using Shared.Models;
@@ -19,8 +20,9 @@ public partial class MainPage
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
-    private readonly AuthService authService;
     private readonly IWeatherApi weatherApi;
+    private readonly IAuthService authService;
+
 
     private int level;
     private int experience;
@@ -40,7 +42,6 @@ public partial class MainPage
     public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
     private bool showCompleted;
-
     public bool ShowCompleted
     {
         get => showCompleted;
@@ -52,9 +53,7 @@ public partial class MainPage
             ApplyFilter();
         }
     }
-
     private bool noTasks;
-
     public bool NoTasks
     {
         get => noTasks;
@@ -66,8 +65,7 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi,
-        AuthService authService)
+    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi, IAuthService authService)
     {
         InitializeComponent();
         BindingContext = this;
@@ -116,10 +114,30 @@ public partial class MainPage
 
     }
 
+    // private async Task<bool> EnsureAuthorizedAsync()
+    // {
+    //     var currentUser = authService.GetCurrentUser();
+    //     var legacyUser = Preferences.Get("current_user", string.Empty);
+    //     var userId = string.IsNullOrWhiteSpace(currentUser) ? legacyUser : currentUser;
+    //     await AppLogger.Info($"Current user: {userId}, {currentUser ?? "<неизвестен>"}");
+    //
+    //     var token = await authService.GetAccessTokenAsync();
+    //     await AppLogger.Info($"Access token: {token ?? "<null>"}");
+    //     await AppLogger.Info($"Refresh token: {await authService.GetRefreshTokenAsync()?? "<null>"}");
+    //
+    //     return !string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token);
+    //
+    // }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
+        // if (!await EnsureAuthorizedAsync())
+        // {
+        //     await AppLogger.Warn("пользователь не авторизован");
+        //     await Navigation.PushModalAsync(new NavigationPage(loginPage));
+        //     return;
+        // }
         var userTask = LoadUserAsync();
         var weatherTask = LoadWeatherAsync();
 
@@ -131,10 +149,10 @@ public partial class MainPage
         }
         await Task.WhenAll(userTask, weatherTask, tasksTask);
     }
-
+    
     private async Task LoadUserAsync()
     {
-        var userId = Preferences.Get("current_user", "");
+        var userId =  Preferences.Get("current_user", "");
         if (string.IsNullOrWhiteSpace(userId))
         {
             await Navigation.PushModalAsync(new NavigationPage(loginPage));
@@ -161,6 +179,13 @@ public partial class MainPage
         try
         {
             var tasks = await taskApi.GetTasksAsync();
+            await AppLogger.Info($"LoadTasksAsync: получено задач = {tasks.Count}");
+
+            foreach (var t in tasks)
+            {
+                await AppLogger.Info($"  task: id={t.TaskId}, name={t.Name}, reward={t.Reward}");
+            }
+
             allTasks.Clear();
             allTasks.AddRange(tasks);
             ApplyFilter();
@@ -172,36 +197,26 @@ public partial class MainPage
             NoTasks = true;
         }
     }
-
+    
     private void ApplyFilter()
     {
-        var filtered = allTasks.ToList();
         VisibleCards.Clear();
+        var filtered = allTasks.ToList();
 
         NoTasks = filtered.Count == 0;
         if (NoTasks)
             return;
 
-        var count = filtered.Count;
-
-        if (count == 0)
-        {
-            NoTasks = true;
-            VisibleCards.Clear();
-            return;
-        }
-
-        if (count > 4)
-            count = 4;
-
-        VisibleCards.Clear();
+        var count = Math.Min(4, filtered.Count);
 
         for (var i = 0; i < count; i++)
         {
             var task = filtered[i];
             var card = CreateTaskCard(task);
-            VisibleCards.Add(card);
+            CardsHost.Children.Add(card);
         }
+        _ = AppLogger.Info($"ApplyFilter: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}");
+
     }
 
     private TaskCard CreateTaskCard(TaskModel task)
@@ -227,7 +242,7 @@ public partial class MainPage
             if (!confirmed)
                 return;
 
-            var currentTaskIds = VisibleCards
+            var currentTaskIds = CardsHost.Children
                 .OfType<TaskCard>()
                 .Select(c => c.Item?.TaskId)
                 .Where(id => !string.IsNullOrEmpty(id))
@@ -268,6 +283,6 @@ public partial class MainPage
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new ProfilePage(userApi, loginPage,authService));
+        await Navigation.PushAsync(new ProfilePage(userApi, loginPage, authService));
     }
 }   

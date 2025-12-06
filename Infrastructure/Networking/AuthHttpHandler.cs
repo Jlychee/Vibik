@@ -1,13 +1,11 @@
 using Infrastructure.Api;
-using Infrastructure.Services;
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Headers;
+using Core.Interfaces;
 
 namespace Infrastructure.Networking;
 
-public class AuthHeaderHandler(AuthService authService) : DelegatingHandler
+public class AuthHeaderHandler(IAuthService authService) : DelegatingHandler
 {
     private static readonly HttpRequestOptionsKey<bool> RefreshAttemptKey = new("AuthHeaderHandler.RefreshAttempt");
 
@@ -30,7 +28,7 @@ public class AuthHeaderHandler(AuthService authService) : DelegatingHandler
             IsRefreshRequest(request))
             return response;
 
-        var refreshed = await authService.TryRefreshAsync(cancellationToken);
+        var refreshed = await authService.TryRefreshTokensAsync(cancellationToken);
         if (refreshed is null)
             return response;
 

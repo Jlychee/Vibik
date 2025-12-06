@@ -20,7 +20,7 @@ public class UserApi : IUserApi
     {
         if (useStub) return StubUser(userId);
         return await httpClient.GetFromJsonAsync<User>(
-            ApiRoutes.UserById(),
+            ApiRoutes.User(),
             ct);
     }
 

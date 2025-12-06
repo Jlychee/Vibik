@@ -1,11 +1,14 @@
+using Core.Domain;
+using Shared.Models;
+using Task = System.Threading.Tasks.Task;
+
 namespace Core.Interfaces;
 
 public interface IAuthService
 {
-    Task SetTokensAsync(string accessToken, string? refreshToken, string username);
+    Task SetTokensAsync(string accessToken, string? refreshToken);
     Task<string?> GetAccessTokenAsync();
     Task<string?> GetRefreshTokenAsync();
-    string? GetCurrentUser();
     void Logout();
-    Task<bool> TryRefreshTokensAsync(CancellationToken ct = default);
+    Task<LoginUserResponse?> TryRefreshTokensAsync(CancellationToken ct = default);
 }

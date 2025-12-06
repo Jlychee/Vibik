@@ -1,5 +1,5 @@
 using Core.Application;
-using Infrastructure.Services;
+using Core.Interfaces;
 
 namespace Vibik;
 
@@ -7,7 +7,7 @@ public partial class ProfilePage
 {
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
-    private readonly AuthService authService;
+    private readonly IAuthService authService;
 
     private string displayName = string.Empty;
 
@@ -81,7 +81,7 @@ public partial class ProfilePage
         }
     }
 
-    public ProfilePage(IUserApi userApi, LoginPage loginPage, AuthService authService)
+    public ProfilePage(IUserApi userApi, LoginPage loginPage, IAuthService authService)
     {
         InitializeComponent();
         this.userApi = userApi;

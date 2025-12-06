@@ -28,8 +28,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<LoginPage>();
         builder.Services.AddSingleton<RegistrationPage>();
         builder.Services.AddSingleton<ProfilePage>();
-
         builder.Services.AddSingleton<IAuthService, AuthService>();
+
         builder.Services.AddTransient<AuthHeaderHandler>();
         builder.Services.AddTransient<HttpLoggingHandler>();
 
@@ -42,6 +42,11 @@ public static class MauiProgram
             //new Uri("https://158.160.105.104:5000");
         new Uri("http://89.169.162.5:5000");
 #endif
+        builder.Services.AddHttpClient("AuthRefresh", client =>
+        {
+            client.BaseAddress = backendBaseUri;
+            client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        });
         builder.Services.AddHttpClient("AuthRefresh", client =>
         {
             client.BaseAddress = backendBaseUri;

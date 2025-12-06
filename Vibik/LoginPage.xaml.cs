@@ -1,5 +1,5 @@
 using Core.Application;
-using Infrastructure.Services;
+using Core.Interfaces;
 using Vibik.Utils;
 
 namespace Vibik;
@@ -7,9 +7,9 @@ namespace Vibik;
 public partial class LoginPage
 {
     private readonly IUserApi userApi;
-    private readonly AuthService authService;
+    private readonly IAuthService authService;
 
-    public LoginPage(IUserApi userApi, AuthService authService)
+    public LoginPage(IUserApi userApi, IAuthService authService)
     {
         InitializeComponent();
         this.userApi = userApi;
@@ -56,7 +56,7 @@ public partial class LoginPage
 
     private async void OnRegisterClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new RegistrationPage(userApi));
+        await Navigation.PushAsync(new RegistrationPage(userApi, authService));
     }
 
     private void ShowError(string message)
