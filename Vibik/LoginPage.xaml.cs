@@ -1,5 +1,4 @@
 using Core.Application;
-using Core.Interfaces;
 using Infrastructure.Services;
 using Vibik.Utils;
 
@@ -7,14 +6,10 @@ namespace Vibik;
 
 public partial class LoginPage
 {
-    private readonly IUserApi? userApi;
-    private readonly IAuthService? authService;
+    private readonly IUserApi userApi;
+    private readonly AuthService authService;
 
-    public static IUserApi? UserApi { get; set; }
-
-    public LoginPage() : this(UserApi, null) { }
-
-    public LoginPage(IUserApi? userApi, IAuthService? authService)
+    public LoginPage(IUserApi userApi, AuthService authService)
     {
         InitializeComponent();
         this.userApi = userApi;
@@ -33,42 +28,24 @@ public partial class LoginPage
             ShowError("Введите логин и пароль.");
             return;
         }
-        if (userApi is null)
-        {
-            await AppLogger.Error("LoginPage: userApi == null, DI не настроен");
-            ShowError("Внутренняя ошибка: API не настроен.");
-            return;
-        }
+
         try
         {
-            var result = await userApi.LoginAsync(username, password);
+            await AppLogger.Info($"Попытка логина: '{username}'");
+            var tokens = await userApi.LoginAsync(username, password);
 
-            if (result is null)
+            if (tokens == null)
             {
-                await AppLogger.Warn($"Неудачный логин для '{username}'");
-                ShowError("Не удалось войти. Проверьте логин и пароль.");
+                await AppLogger.Warn($"Неудачный логин: пользователь '{username}' не найден (заглушка).");
+                ShowError("Не удалось войти. Проверьте данные.");
                 return;
             }
-            var normalizedUsername = string.IsNullOrWhiteSpace(result.Username)
-                ? username
-                : result.Username;
 
-            if (authService is null)
-            {
-                await AppLogger.Warn("LoginPage: authService == null, токены не сохраняются");
-            }
-            else
-            {
-                await authService.SetTokensAsync( result.AccessToken,  result.RefreshToken, normalizedUsername);
-            }
-            Preferences.Set("current_user", normalizedUsername);
-
-            Preferences.Set("display_name", result.DisplayName);
-
-            await AppLogger.Info($"Успешный логин: '{normalizedUsername}'");
+            await authService.SetTokensAsync(tokens.AccessToken, tokens.RefreshToken);
+            Preferences.Set("current_user", username);
+            await AppLogger.Info($"Успешный логин: '{username}'");
 
             Application.Current!.MainPage = new AppShell();
-
         }
         catch (Exception ex)
         {
@@ -79,7 +56,7 @@ public partial class LoginPage
 
     private async void OnRegisterClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new RegistrationPage(userApi, authService));
+        await Navigation.PushAsync(new RegistrationPage(userApi));
     }
 
     private void ShowError(string message)
@@ -93,7 +70,7 @@ public partial class LoginPage
         PasswordEntry.IsPassword = !PasswordEntry.IsPassword;
         TogglePasswordVisibilityButton.Source = PasswordEntry.IsPassword ? "eye_show.svg" : "eye_hide.svg";
     }
-    
+
     private async void OnShareLatestLogClicked(object sender, EventArgs e)
     {
         var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
@@ -112,7 +89,7 @@ public partial class LoginPage
         await Share.Default.RequestAsync(new ShareFileRequest
         {
             Title = "Vibik log",
-            File  = new ShareFile(last)
+            File = new ShareFile(last)
         });
     }
 }
