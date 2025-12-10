@@ -6,6 +6,7 @@ using Infrastructure.Api;
 using Infrastructure.Networking;
 using Infrastructure.Services;
 using Vibik.Utils;
+using Vibik.Services;
 
 namespace Vibik;
 
@@ -29,6 +30,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<RegistrationPage>();
         builder.Services.AddSingleton<ProfilePage>();
         builder.Services.AddSingleton<IAuthService, AuthService>();
+        builder.Services.AddSingleton<IAuthNavigator, AuthNavigator>();
 
         builder.Services.AddTransient<AuthHeaderHandler>();
         builder.Services.AddTransient<RefreshHeaderHandler>();

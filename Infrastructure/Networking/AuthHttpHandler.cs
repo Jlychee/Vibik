@@ -2,11 +2,10 @@ using Infrastructure.Api;
 using System.Net;
 using System.Net.Http.Headers;
 using Core.Interfaces;
-using Infrastructure.Utils;
 
 namespace Infrastructure.Networking;
 
-public class AuthHeaderHandler(IAuthService authService) : DelegatingHandler
+public class AuthHeaderHandler(IAuthService authService, IAuthNavigator authNavigator) : DelegatingHandler
 {
     private static readonly HttpRequestOptionsKey<bool> RefreshAttemptKey = new("AuthHeaderHandler.RefreshAttempt");
 
@@ -22,24 +21,44 @@ public class AuthHeaderHandler(IAuthService authService) : DelegatingHandler
             request.Headers.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
         }
-        await AppLogger.Warn("Я тут");
+
         var response = await base.SendAsync(request, cancellationToken);
-        if (response.StatusCode != HttpStatusCode.Unauthorized ||
-            refreshAttempted ||
-            IsRefreshRequest(request))
+        if (response.StatusCode != HttpStatusCode.Unauthorized)
             return response;
-        await AppLogger.Warn("Я тут 2");
-        var refreshed = await authService.TryRefreshTokensAsync(cancellationToken);
-        if (refreshed is null)
+
+        if (IsRefreshRequest(request))
+        {
+            await HandleUnauthorizedAsync();
             return response;
-        await AppLogger.Warn("Я тут 3");
-        response.Dispose();
+        }
 
-        var retryRequest = await CloneRequestAsync(request, cancellationToken);
-        retryRequest.Options.Set(RefreshAttemptKey, true);
-        retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
+        if (!refreshAttempted)
+        {
+            var refreshed = await authService.TryRefreshTokensAsync(cancellationToken);
+            if (refreshed is not null)
+            {
+                response.Dispose();
 
-        return await base.SendAsync(retryRequest, cancellationToken);
+                var retryRequest = await CloneRequestAsync(request, cancellationToken);
+                retryRequest.Options.Set(RefreshAttemptKey, true);
+                retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshed.AccessToken);
+
+                var retryResponse = await base.SendAsync(retryRequest, cancellationToken);
+                if (retryResponse.StatusCode == HttpStatusCode.Unauthorized)
+                    await HandleUnauthorizedAsync();
+
+                return retryResponse;
+            }
+        }
+
+        await HandleUnauthorizedAsync();
+        return response;
+    }
+
+    private async Task HandleUnauthorizedAsync()
+    {
+        authService.Logout();
+        await authNavigator.RedirectToLoginAsync();
     }
 
     private static async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request, CancellationToken ct)
