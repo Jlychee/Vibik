@@ -6,6 +6,4 @@ public class TaskExtendedInfo
     public int PhotosRequired { get; set; }
     public List<Uri>? ExamplePhotos { get; set; }
     public List<Uri> UserPhotos { get; set; }
-
-    public void AddPhoto(Uri photo) => UserPhotos.Add(photo);
 }
