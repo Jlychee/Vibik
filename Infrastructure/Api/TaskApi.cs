@@ -29,7 +29,8 @@ public sealed class TaskApi: ITaskApi
         {
             try
             {
-                var fullTask = await GetTaskAsync(task.TaskId, ct);
+                var fullTask = await GetTaskAsync(task.UserTaskId.ToString(), ct);
+                await AppLogger.Info($"экстендед инфо из таскапи {fullTask?.ExtendedInfo}");
                 if (fullTask != null) result.Add(fullTask);
             }
             catch (Exception e)
@@ -83,7 +84,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Найди интересные облака и сфотографируй",
                     PhotosRequired = 2,
@@ -99,7 +100,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-3),
                 Reward = 80,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Линия горизонта и отражения",
                     PhotosRequired = 4,
@@ -115,7 +116,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфотографируй 6 желтых машин",
                     PhotosRequired = 6,
@@ -130,7 +131,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфотографируй 9 желтых машин",
                     PhotosRequired = 9,
@@ -145,7 +146,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "ЛОВУШКААКАКА",
                     PhotosRequired = 9,
@@ -160,7 +161,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow,
                 Reward = 50,
                 Completed = false,
-                ModelExtendedInfo = new TaskModelExtendedInfo
+                ExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфоткать 5 графифити",
                     PhotosRequired = 5,

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Core;
 using Core.Domain;
 using Core.Interfaces;
@@ -16,16 +17,17 @@ public partial class TaskDetailsPage
     private readonly ITaskApi taskApi;
 
 
-    private TaskModelExtendedInfo ModelExtendedInfo => taskModel.ModelExtendedInfo;
+    private TaskModelExtendedInfo ModelExtendedInfo;
 
     public TaskDetailsPage(TaskModel taskModel, ITaskApi taskApi)
     {
         InitializeComponent();
         this.taskModel = taskModel ?? throw new ArgumentNullException(nameof(taskModel));
         this.taskApi = taskApi ?? throw new ArgumentNullException(nameof(taskApi));
-        this.taskModel.ModelExtendedInfo ??= new TaskModelExtendedInfo { UserPhotos = [] };
-        this.taskModel.ModelExtendedInfo.UserPhotos ??= [];
+        this.ModelExtendedInfo = ModelExtendedInfo ?? new TaskModelExtendedInfo();
+        this.taskModel.ExtendedInfo.UserPhotos ??= [];
         BindingContext = new ViewModel(this.taskModel);
+        ModelExtendedInfo = taskModel.ExtendedInfo;
         LoadSavedPhotos();
         BuildPhotosGrid();
     }

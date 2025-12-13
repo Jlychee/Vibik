@@ -12,9 +12,9 @@ public sealed class ViewModel
     public ViewModel(TaskModel taskModel)
     {
         TaskName = string.IsNullOrWhiteSpace(taskModel.Name) ? "Задание" : taskModel.Name;
-        Description = taskModel.ModelExtendedInfo?.Description ?? string.Empty;
+        Description = taskModel.ExtendedInfo?.Description ?? string.Empty;
 
-        var example = taskModel.ModelExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.AbsolutePath;
+        var example = taskModel.ExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.AbsolutePath;
         ExampleCollage = ImageSourceFinder.ResolveImage(example);
     }
 }
