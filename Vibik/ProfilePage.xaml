@@ -5,7 +5,6 @@
              Title="Профиль">
     
     <Grid BackgroundColor="{StaticResource NavySeal}">
-        <!-- Основной контент прокручиваемый -->
         <ScrollView x:Name="ProfileScroll" HorizontalOptions="Center">
             <VerticalStackLayout Padding="24,60,24,100"
                                     Spacing="24"
@@ -106,12 +105,12 @@
                                                        VerticalOptions="FillAndExpand"
                                                        HorizontalOptions="FillAndExpand"
                                                        Spacing="8">
-                                         <Label Text="Монеты/Опыт"
+                                         <Label Text="Монеты"
                                                 FontSize="14.25"
                                                 TextColor="Black"
-                                                HorizontalOptions="Start"
+                                                HorizontalOptions="Center"
                                                 Margin="0,-10,0,0"/>
-                                         <Label Text="{Binding Experience}"
+                                         <Label Text="{Binding Money}"
                                                 FontSize="40"
                                                 FontAttributes="Bold"
                                                 TextColor="Black"
@@ -175,13 +174,13 @@
                                                        VerticalOptions="FillAndExpand"
                                                        HorizontalOptions="FillAndExpand"
                                                        Spacing="8">
-                                         <Label Text="Моих мест на карте"
-                                                FontSize="13.25"
+                                         <Label Text="Опыт"
+                                                FontSize="14.25"
                                                 TextColor="Black"
                                                 HorizontalOptions="Center"
                                                 HorizontalTextAlignment="Center"
                                                 Margin="0,-10,0,0"/>
-                                         <Label Text="{Binding PlacesCount}"
+                                         <Label Text="{Binding Experience}"
                                                 FontSize="53"
                                                 FontAttributes="Bold"
                                                 TextColor="Black"

@@ -1,4 +1,6 @@
+using Core;
 using Core.Application;
+using Core.Domain;
 using Core.Interfaces;
 
 namespace Vibik;
@@ -6,6 +8,7 @@ namespace Vibik;
 public partial class ProfilePage
 {
     private readonly IUserApi userApi;
+    private readonly ITaskApi taskApi;
     private readonly LoginPage loginPage;
     private readonly IAuthService authService;
 
@@ -56,6 +59,18 @@ public partial class ProfilePage
             OnPropertyChanged();
         }
     }
+    private int money;
+
+    public int Money
+    {
+        get => money;
+        set
+        {
+            money = value;
+            OnPropertyChanged();
+        }
+    }
+
 
     private int completedTasks;
 
@@ -68,23 +83,12 @@ public partial class ProfilePage
             OnPropertyChanged();
         }
     }
-
-    private int placesCount;
-
-    public int PlacesCount
-    {
-        get => placesCount;
-        set
-        {
-            placesCount = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public ProfilePage(IUserApi userApi, LoginPage loginPage, IAuthService authService)
+    
+    public ProfilePage(IUserApi userApi, LoginPage loginPage, IAuthService authService, ITaskApi taskApi)
     {
         InitializeComponent();
         this.userApi = userApi;
+        this.taskApi = taskApi;
         this.loginPage = loginPage;
         this.authService = authService;
         BindingContext = this;
@@ -119,11 +123,10 @@ public partial class ProfilePage
             Username = user.Username;
             DisplayName = user.DisplayName;
             Level = user.Level;
+            Money = user.Money;
             Experience = user.Experience;
-
-            // #ЗАГЛУШКА
-            CompletedTasks = 0;
-            PlacesCount = 0;
+            var completed = await taskApi.GetCompletedAsync();
+            CompletedTasks = completed.Count;
         }
         catch (Exception ex)
         {

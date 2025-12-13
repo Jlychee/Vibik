@@ -33,7 +33,7 @@
                            HasShadow="False"
                            HorizontalOptions="End">
                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                            <Label Text="{Binding Experience}" FontSize="20" TextColor="{StaticResource TextBrown}" />
+                            <Label Text="{Binding Money}" FontSize="20" TextColor="{StaticResource TextBrown}" />
                             <Image Source="money.png"
                                    WidthRequest="24"
                                    HeightRequest="24"

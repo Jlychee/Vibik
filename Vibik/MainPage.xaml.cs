@@ -24,8 +24,8 @@ public partial class MainPage
     private readonly IAuthService authService;
 
 
+    private int money;
     private int level;
-    private int experience;
     private ImageSource? weatherImage;
     private ObservableCollection<View> VisibleCards { get; } = new();
 
@@ -37,7 +37,7 @@ public partial class MainPage
 
 
     public int Level { get => level; set { level = value; OnPropertyChanged(); } }
-    public int Experience { get => experience; set { experience = value; OnPropertyChanged(); } }
+    public int Money { get => money; set { money = value; OnPropertyChanged(); } }
     public string WeatherTemp { get => weatherTemp; set { weatherTemp = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
@@ -172,8 +172,8 @@ public partial class MainPage
             var user = await userApi.GetUserAsync(userId);
             if (user != null)
             {
+                Money = user.Money;
                 Level = user.Level;
-                Experience = user.Experience;
             }
         }
         catch (Exception ex)
@@ -291,6 +291,6 @@ public partial class MainPage
 
     private async void OnProfileClicked(object sender, EventArgs e)
     {
-        await Navigation.PushAsync(new ProfilePage(userApi, loginPage, authService));
+        await Navigation.PushAsync(new ProfilePage(userApi, loginPage, authService, taskApi));
     }
 }   

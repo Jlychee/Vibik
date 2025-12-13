@@ -41,6 +41,13 @@ public sealed class TaskApi: ITaskApi
         }
         return result ?? [];
     }
+    
+    public async Task<IReadOnlyList<TaskModel>> GetCompletedAsync(CancellationToken ct = default)
+    {
+        if (useStub) return [];
+        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>(ApiRoutes.CompletedTasks, ct);
+        return list ?? [];
+    }
 
     public async Task<TaskModel?> GetTaskAsync(string taskId, CancellationToken ct = default)
     {
