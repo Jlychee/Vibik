@@ -2,7 +2,7 @@ using Utils;
 
 namespace Vibik.Utils;
 
-public class AppAlerts
+public static class AppAlerts
 {
     public static Task WeatherUpdateFailed() =>
         Alerts.Info("Проблема с погодой",

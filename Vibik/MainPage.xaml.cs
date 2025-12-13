@@ -4,7 +4,6 @@ using Core.Application;
 using Core.Domain;
 using Core.Interfaces;
 using Infrastructure.Api;
-using Infrastructure.Services;
 using Domain.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
@@ -41,6 +40,8 @@ public partial class MainPage
     public string WeatherTemp { get => weatherTemp; set { weatherTemp = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
     public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
+    
+    private List<TaskModel>? completedTasks;
     private bool showCompleted;
     public bool ShowCompleted
     {
@@ -50,7 +51,7 @@ public partial class MainPage
             if (showCompleted == value) return;
             showCompleted = value;
             OnPropertyChanged();
-            ApplyFilter();
+            _ = ApplyFilter();
         }
     }
     private bool noTasks;
@@ -196,7 +197,7 @@ public partial class MainPage
 
             allTasks.Clear();
             allTasks.AddRange(tasks);
-            ApplyFilter();
+            await ApplyFilter();
         }
         catch (Exception ex)
         {
@@ -206,25 +207,71 @@ public partial class MainPage
         }
     }
     
-    private void ApplyFilter()
+    private async Task EnsureCompletedTasksLoadedAsync()
     {
-        VisibleCards.Clear();
-        var filtered = allTasks.ToList();
-
-        NoTasks = filtered.Count == 0;
-        if (NoTasks)
+        if (completedTasks != null)
             return;
 
-        var count = Math.Min(4, filtered.Count);
-
-        for (var i = 0; i < count; i++)
+        try
         {
-            var task = filtered[i];
+            var list = await taskApi.GetCompletedAsync();
+            completedTasks = list?.ToList() ?? new List<TaskModel>();
+
+            await AppLogger.Info($"LoadCompletedTasks: получено выполненных задач = {completedTasks.Count}");
+        }
+        catch (Exception ex)
+        {
+            completedTasks = [];
+            await AppLogger.Warn($"Не удалось загрузить выполненные задания: {ex.Message}");
+        }
+    }
+
+    private async Task ApplyFilter()
+    {
+        CardsHost.Children.Clear();
+        VisibleCards.Clear();
+        var activeTasks = allTasks.Where(t => !t.Completed).ToList();
+        var activeCount = Math.Min(4, activeTasks.Count);
+
+        for (var i = 0; i < activeCount; i++)
+        {
+            var task = activeTasks[i];
             var card = CreateTaskCard(task);
             CardsHost.Children.Add(card);
+            VisibleCards.Add(card);
         }
-        _ = AppLogger.Info($"ApplyFilter: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}");
+        if (ShowCompleted)
+        {
+            await EnsureCompletedTasksLoadedAsync();
 
+            var done = completedTasks!
+                .ToList();
+
+            if (done.Count > 0)
+            {
+                var header = new Label
+                {
+                    Text = "Выполненные",
+                    FontSize = 18,
+                    FontAttributes = FontAttributes.Bold,
+                    Margin = new Thickness(16, 24, 16, 8),
+                    TextColor = (Color)Application.Current.Resources["MilkChocolate"]
+                };
+                CardsHost.Children.Add(header);
+
+                foreach (var completedCard in done.Select(task => CreateTaskCard(task)))
+                {
+                    completedCard.Opacity = 0.7;
+                    CardsHost.Children.Add(completedCard);
+                    VisibleCards.Add(completedCard);
+                }
+            }
+        }
+
+        NoTasks = !CardsHost.Children.OfType<TaskCard>().Any();
+
+        _ = AppLogger.Info(
+            $"ApplyFilterAsync: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}, ShowCompleted = {ShowCompleted}");
     }
 
     private TaskCard CreateTaskCard(TaskModel taskModel)
