@@ -1,7 +1,9 @@
 using Core;
+using Core.Domain;
 using Core.Interfaces;
-using Shared.Models;
+using Domain.Models;
 using Utils;
+using Vibik.Utils;
 using Task = System.Threading.Tasks.Task;
 
 namespace Vibik;
@@ -10,24 +12,23 @@ public partial class TaskDetailsPage
 {
     private const int TileSize = 120;
 
-    private readonly Shared.Models.Task task;
+    private readonly TaskModel taskModel;
     private readonly ITaskApi taskApi;
 
 
-    private TaskExtendedInfo ExtendedInfo => task.ExtendedInfo;
+    private TaskModelExtendedInfo ModelExtendedInfo => taskModel.ModelExtendedInfo;
 
-    public TaskDetailsPage(Shared.Models.Task task, ITaskApi taskApi)
+    public TaskDetailsPage(TaskModel taskModel, ITaskApi taskApi)
     {
         InitializeComponent();
-        this.task = task ?? throw new ArgumentNullException(nameof(task));
+        this.taskModel = taskModel ?? throw new ArgumentNullException(nameof(taskModel));
         this.taskApi = taskApi ?? throw new ArgumentNullException(nameof(taskApi));
-        this.task.ExtendedInfo ??= new TaskExtendedInfo { UserPhotos = [] };
-        this.task.ExtendedInfo.UserPhotos ??= [];
-        BindingContext = new ViewModel(this.task);
+        this.taskModel.ModelExtendedInfo ??= new TaskModelExtendedInfo { UserPhotos = [] };
+        this.taskModel.ModelExtendedInfo.UserPhotos ??= [];
+        BindingContext = new ViewModel(this.taskModel);
         LoadSavedPhotos();
         BuildPhotosGrid();
     }
-
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -37,8 +38,9 @@ public partial class TaskDetailsPage
 
     private async void OnSendClick(object? sender, EventArgs e)
     {
-        var required = ExtendedInfo.PhotosRequired;
-        var count = ExtendedInfo.UserPhotos.Count;
+        await AppLogger.Info($"EXTENDED TASK DETAILS{ModelExtendedInfo.Description}");
+        var required = ModelExtendedInfo.PhotosRequired;
+        var count = ModelExtendedInfo.UserPhotos.Count;
 
         if (required > 0 && count < required)
         {
@@ -47,7 +49,7 @@ public partial class TaskDetailsPage
             return;
         }
 
-        var localPaths = ExtendedInfo.UserPhotos
+        var localPaths = ModelExtendedInfo.UserPhotos
             .Select(p => p.AbsolutePath)
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Where(IsLocalPath)
@@ -62,7 +64,7 @@ public partial class TaskDetailsPage
 
         try
         {
-            var ok = await taskApi.SubmitAsync(task.TaskId ?? TaskKey, localPaths);
+            var ok = await taskApi.SubmitAsync(taskModel.TaskId, localPaths);
             if (!ok)
             {
                 await DisplayAlert("Ошибка", "Не удалось отправить задание. Проверьте сеть и попробуйте ещё раз.",
@@ -71,7 +73,7 @@ public partial class TaskDetailsPage
             }
 
             await DisplayAlert("Готово", "Задание отправлено!", "OK");
-            task.Completed = true;
+            taskModel.Completed = true;
             foreach (var p in localPaths) TryDeleteLocal(p);
             BuildPhotosGrid();
         }
@@ -102,12 +104,12 @@ public partial class TaskDetailsPage
         PhotoShotsGrid.WidthRequest = Columns * TileSize + (Columns - 1) * CellGap;
 
 
-        var paths = ExtendedInfo.UserPhotos
+        var paths = ModelExtendedInfo.UserPhotos
             .Select(p => p.AbsolutePath)
             .Where(u => !string.IsNullOrWhiteSpace(u))
             .ToList();
 
-        var required = ExtendedInfo.PhotosRequired;
+        var required = ModelExtendedInfo.PhotosRequired;
         var totalSlots = required > 0 ? required : Math.Max(paths.Count + 1, 1);
 
         var rows = (int)Math.Ceiling(totalSlots / (double)Columns);
@@ -127,14 +129,14 @@ public partial class TaskDetailsPage
     {
         var saved = PhotoService.GetSavedPhotos(TaskKey);
 
-        ExtendedInfo.UserPhotos.RemoveAll(p =>
+        ModelExtendedInfo.UserPhotos.RemoveAll(p =>
         {
             if (string.IsNullOrWhiteSpace(p.AbsolutePath)) return false;
             if (!IsLocalPath(p.AbsolutePath)) return false;
             return !File.Exists(p.AbsolutePath);
         });
 
-        var existing = ExtendedInfo.UserPhotos
+        var existing = ModelExtendedInfo.UserPhotos
             .Where(p => !string.IsNullOrWhiteSpace(p.AbsolutePath))
             .Select(p => p.AbsolutePath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -142,7 +144,7 @@ public partial class TaskDetailsPage
         foreach (var path in saved.Where(File.Exists))
         {
             if (existing.Add(path))
-                ExtendedInfo.UserPhotos.Add(new Uri(path));
+                ModelExtendedInfo.UserPhotos.Add(new Uri(path));
         }
     }
 
@@ -201,12 +203,12 @@ public partial class TaskDetailsPage
                 if (newFile == null) return;
 
                 var newPath = await PhotoService.SaveFileResultAsync(newFile, TaskKey);
-                var idx = ExtendedInfo.UserPhotos.FindIndex(p => p.AbsolutePath == path);
+                var idx = ModelExtendedInfo.UserPhotos.FindIndex(p => p.AbsolutePath == path);
                 if (idx >= 0)
                 {
-                    TryDeleteLocal(ExtendedInfo.UserPhotos[idx].AbsolutePath);
+                    TryDeleteLocal(ModelExtendedInfo.UserPhotos[idx].AbsolutePath);
 
-                    ExtendedInfo.UserPhotos[idx] = new Uri(newPath);
+                    ModelExtendedInfo.UserPhotos[idx] = new Uri(newPath);
                     BuildPhotosGrid();
                 }
                 break;
@@ -217,7 +219,7 @@ public partial class TaskDetailsPage
                 var ok = await DisplayAlert("Удалить фото?", "Это действие необратимо.", "Удалить", "Отмена");
                 if (!ok) return;
 
-                var removed = ExtendedInfo.UserPhotos.RemoveAll(p => p.AbsolutePath == path) > 0;
+                var removed = ModelExtendedInfo.UserPhotos.RemoveAll(p => p.AbsolutePath == path) > 0;
                 if (removed) TryDeleteLocal(path);
                 BuildPhotosGrid();
                 break;
@@ -229,8 +231,8 @@ public partial class TaskDetailsPage
     {
         try
         {
-            var current = ExtendedInfo.UserPhotos?.Count ?? 0;
-            if (ExtendedInfo.PhotosRequired > 0 && current >= ExtendedInfo.PhotosRequired)
+            var current = ModelExtendedInfo.UserPhotos?.Count ?? 0;
+            if (ModelExtendedInfo.PhotosRequired > 0 && current >= ModelExtendedInfo.PhotosRequired)
             {
                 await DisplayAlert("Лимит", "Достигнуто максимальное количество фото.", "OK");
                 return;
@@ -241,7 +243,7 @@ public partial class TaskDetailsPage
 
             var savedPath = await PhotoService.SaveFileResultAsync(file, TaskKey);
 
-            ExtendedInfo.UserPhotos!.Add(new Uri(savedPath));
+            ModelExtendedInfo.UserPhotos!.Add(new Uri(savedPath));
             BuildPhotosGrid();
         }
         catch (FeatureNotSupportedException)
@@ -257,11 +259,8 @@ public partial class TaskDetailsPage
             await DisplayAlert("Ошибка", ex.Message, "OK");
         }
     }
-    
-    private string TaskKey =>
-        !string.IsNullOrWhiteSpace(task.TaskId)
-            ? task.TaskId
-            : PhotoService.Slug(string.IsNullOrWhiteSpace(task.Name) ? "task" : task.Name);
+
+    private string TaskKey => taskModel.TaskId;
 
     private static bool IsLocalPath(string urlOrPath)
     {

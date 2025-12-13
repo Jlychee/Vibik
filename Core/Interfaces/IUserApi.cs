@@ -1,5 +1,5 @@
 using Core.Domain;
-using Shared.Models;
+using Domain.Models;
 
 namespace Core.Application;
 

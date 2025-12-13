@@ -1,6 +1,6 @@
-namespace Shared.Models;
+namespace Domain.Models;
 
-public class TaskExtendedInfo
+public class TaskModelExtendedInfo
 {
     public string Description { get; set; }
     public int PhotosRequired { get; set; }

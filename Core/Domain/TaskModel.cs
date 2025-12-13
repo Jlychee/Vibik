@@ -1,6 +1,8 @@
-namespace Shared.Models;
+using Domain.Models;
 
-public class Task
+namespace Core.Domain;
+
+public class TaskModel
 {    
     public string TaskId { get; set; }
     public string Name { get; set; }
@@ -8,8 +10,8 @@ public class Task
     public int Reward {get; set;}
     
     public bool Completed { get; set; }
-    public TaskExtendedInfo ExtendedInfo {get; set;}
+    public TaskModelExtendedInfo ModelExtendedInfo {get; set;}
 
-    private const double MagicConst = 0.3;
+    private const double MagicConst = 0.2;
     public int Swap => (int)(Reward * MagicConst);
 }

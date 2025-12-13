@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using Core.Application;
 using Core.Domain;
-using Shared.Models;
+using Domain.Models;
 
 namespace Infrastructure.Api;
 

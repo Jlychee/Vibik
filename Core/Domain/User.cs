@@ -1,9 +1,10 @@
-﻿namespace Shared.Models;
+﻿namespace Domain.Models;
 
 public class User
 {
-    public string Username { get; set; }
-    public string DisplayName { get; set; }
+    public required string Username { get; set; }
+    public required string DisplayName { get; set; }
     public int Level { get; set; }
     public int Experience { get; set; }
+    public int Money { get; set; }
 }

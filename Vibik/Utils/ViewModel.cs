@@ -1,4 +1,5 @@
-using Task = Shared.Models.Task;
+using Core.Domain;
+using Domain.Models;
 
 namespace Utils;
 
@@ -8,12 +9,12 @@ public sealed class ViewModel
     public string Description { get; }
     public ImageSource ExampleCollage { get; }
 
-    public ViewModel(Task task)
+    public ViewModel(TaskModel taskModel)
     {
-        TaskName = string.IsNullOrWhiteSpace(task.Name) ? "Задание" : task.Name;
-        Description = task.ExtendedInfo?.Description ?? string.Empty;
+        TaskName = string.IsNullOrWhiteSpace(taskModel.Name) ? "Задание" : taskModel.Name;
+        Description = taskModel.ModelExtendedInfo?.Description ?? string.Empty;
 
-        var example = task.ExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.AbsolutePath;
+        var example = taskModel.ModelExtendedInfo?.ExamplePhotos?.FirstOrDefault()?.AbsolutePath;
         ExampleCollage = ImageSourceFinder.ResolveImage(example);
     }
 }

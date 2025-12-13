@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
-using Shared.Models;
-using Task = Shared.Models.Task;
+using Domain.Models;
 
 namespace Utils;
 
@@ -28,13 +27,6 @@ public static class PhotoService
         return await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions { Title = "Выберите фото" });
     }
     
-    public static string Slug(string s)
-    {
-        s = s.ToLowerInvariant();
-        s = Regex.Replace(s, @"\s+", "-");
-        s = Regex.Replace(s, @"[^a-z0-9\-_]+", "_");
-        return s.Trim('_', '-');
-    }
 
     private static async Task<bool> EnsurePermission<T>() where T : Permissions.BasePermission, new()
     {

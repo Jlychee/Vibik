@@ -84,6 +84,5 @@
             refreshToken = null;
             TokenStorage.Clear();
         }
-        
         private record RefreshRequest(string RefreshToken);
     }

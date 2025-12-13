@@ -1,7 +1,8 @@
 using System.Windows.Input;
 using Core;
 using Core.Application;
-using Task = Shared.Models.Task;
+using Core.Domain;
+using Domain.Models;
 
 namespace Vibik.Resources.Components;
 
@@ -69,8 +70,8 @@ public partial class TaskCard
     public ImageSource? IconSource { get => (ImageSource?)GetValue(IconSourceProperty); set => SetValue(IconSourceProperty, value); }
 
     public static readonly BindableProperty ItemProperty =
-        BindableProperty.Create(nameof(Item), typeof(Task), typeof(TaskCard));
-    public Task? Item { get => (Task?)GetValue(ItemProperty); set => SetValue(ItemProperty, value); }
+        BindableProperty.Create(nameof(Item), typeof(TaskModel), typeof(TaskCard));
+    public TaskModel? Item { get => (TaskModel?)GetValue(ItemProperty); set => SetValue(ItemProperty, value); }
 
     public string DaysPassedText => DaysPassed == 0 ? "со старта сегодня" : $"со старта прошло {DaysPassed} дн.";
     public string CostText => $"награда: {Cost}";
@@ -111,7 +112,7 @@ public partial class TaskCard
     
     private async void OnCardTapped(object? sender, TappedEventArgs e)
     {
-        var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as Task;
+        var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as TaskModel;
         var item = fromGesture ?? Item;
         if (item is null) return;
         await Navigation.PushAsync(new TaskDetailsPage(item, TaskApi));

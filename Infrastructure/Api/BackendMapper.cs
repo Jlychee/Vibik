@@ -1,4 +1,5 @@
-using TaskModel = Shared.Models.Task;
+using Core.Domain;
+using Domain.Models;
 
 namespace Infrastructure.Api;
 

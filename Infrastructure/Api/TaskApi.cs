@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using Core;
-using Shared.Models;
-using TaskModel = Shared.Models.Task;
+using Core.Domain;
+using Domain.Models;
+using Infrastructure.Utils;
 
 namespace Infrastructure.Api;
 
@@ -22,7 +23,22 @@ public sealed class TaskApi: ITaskApi
         var list = await httpClient.GetFromJsonAsync<List<TaskModel>>(
             ApiRoutes.AllTasks, 
             ct);
-        return list ?? [];
+        var result = new List<TaskModel>();
+        if (list == null) return [];
+        foreach (var task in list)
+        {
+            try
+            {
+                var fullTask = await GetTaskAsync(task.TaskId, ct);
+                if (fullTask != null) result.Add(fullTask);
+            }
+            catch (Exception e)
+            {
+                await AppLogger.Error(e.Message);
+                throw;
+            }
+        }
+        return result ?? [];
     }
 
     public async Task<TaskModel?> GetTaskAsync(string taskId, CancellationToken ct = default)
@@ -32,7 +48,7 @@ public sealed class TaskApi: ITaskApi
             ApiRoutes.TaskById(taskId),
             ct);
     }
-
+    
     public async Task<bool> SwapTaskAsync(string taskId, CancellationToken ct = default)
     {
         if (useStub) return true;
@@ -56,13 +72,6 @@ public sealed class TaskApi: ITaskApi
         return resp.IsSuccessStatusCode;
     }
     
-    public async Task<IReadOnlyList<TaskModel>> GetCompletedAsync(CancellationToken ct = default)
-    {
-        if (useStub) return [];
-        var list = await httpClient.GetFromJsonAsync<List<TaskModel>>(ApiRoutes.CompletedTasks, ct);
-        return list ?? [];
-    }
-
     private static List<TaskModel> StubTasks()
     {
         return
@@ -74,7 +83,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Найди интересные облака и сфотографируй",
                     PhotosRequired = 2,
@@ -90,7 +99,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-3),
                 Reward = 80,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Линия горизонта и отражения",
                     PhotosRequired = 4,
@@ -106,7 +115,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфотографируй 6 желтых машин",
                     PhotosRequired = 6,
@@ -121,7 +130,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфотографируй 9 желтых машин",
                     PhotosRequired = 9,
@@ -136,7 +145,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow.AddDays(-1),
                 Reward = 50,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "ЛОВУШКААКАКА",
                     PhotosRequired = 9,
@@ -151,7 +160,7 @@ public sealed class TaskApi: ITaskApi
                 StartTime = DateTime.UtcNow,
                 Reward = 50,
                 Completed = false,
-                ExtendedInfo = new TaskExtendedInfo
+                ModelExtendedInfo = new TaskModelExtendedInfo
                 {
                     Description = "Сфоткать 5 графифити",
                     PhotosRequired = 5,

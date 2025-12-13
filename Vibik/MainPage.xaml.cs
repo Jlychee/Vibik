@@ -1,13 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using Core;
 using Core.Application;
+using Core.Domain;
 using Core.Interfaces;
 using Infrastructure.Api;
 using Infrastructure.Services;
-using Shared.Models;
+using Domain.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
-using TaskModel = Shared.Models.Task;
 using Vibik.Utils;
 
 namespace Vibik;
@@ -114,47 +114,55 @@ public partial class MainPage
 
     }
 
-    // private async Task<bool> EnsureAuthorizedAsync()
-    // {
-    //     var currentUser = authService.GetCurrentUser();
-    //     var legacyUser = Preferences.Get("current_user", string.Empty);
-    //     var userId = string.IsNullOrWhiteSpace(currentUser) ? legacyUser : currentUser;
-    //     await AppLogger.Info($"Current user: {userId}, {currentUser ?? "<неизвестен>"}");
-    //
-    //     var token = await authService.GetAccessTokenAsync();
-    //     await AppLogger.Info($"Access token: {token ?? "<null>"}");
-    //     await AppLogger.Info($"Refresh token: {await authService.GetRefreshTokenAsync()?? "<null>"}");
-    //
-    //     return !string.IsNullOrWhiteSpace(userId) && !string.IsNullOrWhiteSpace(token);
-    //
-    // }
+    private string? ResolveCurrentUserId()
+    {
+        var userId = Preferences.Get("current_user", string.Empty);
+        return string.IsNullOrWhiteSpace(userId) ? null : userId;
+    }
 
+    private async Task<bool> EnsureAuthorizedAsync()
+    {
+        var userId = ResolveCurrentUserId();
+        await AppLogger.Info($"Current user: {userId ?? "<null>"}");
+
+        var accessToken = await authService.GetAccessTokenAsync();
+        var refreshToken = await authService.GetRefreshTokenAsync();
+
+        await AppLogger.Info($"Access token: {accessToken ?? "<null>"}");
+        await AppLogger.Info($"Refresh token: {refreshToken ?? "<null>"}");
+
+        return !string.IsNullOrWhiteSpace(userId) &&
+               !string.IsNullOrWhiteSpace(accessToken);
+    }
+    
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // if (!await EnsureAuthorizedAsync())
-        // {
-        //     await AppLogger.Warn("пользователь не авторизован");
-        //     await Navigation.PushModalAsync(new NavigationPage(loginPage));
-        //     return;
-        // }
-        var userTask = LoadUserAsync();
-        var weatherTask = LoadWeatherAsync();
+        if (!await EnsureAuthorizedAsync())
+        {
+            await AppLogger.Warn("пользователь не авторизован");
+            await Navigation.PushModalAsync(new NavigationPage(loginPage));
+            return;
+        }
 
-        var tasksTask = Task.CompletedTask;
+        var user = LoadUserAsync();
+        var weather = LoadWeatherAsync();
+
+        var tasks = Task.CompletedTask;
         if (!taskLoaded)
         {
-            tasksTask = LoadTasksAsync();
+            tasks = LoadTasksAsync();
             taskLoaded = true;
         }
-        await Task.WhenAll(userTask, weatherTask, tasksTask);
+        await Task.WhenAll(user, weather, tasks);
     }
     
     private async Task LoadUserAsync()
     {
-        var userId =  Preferences.Get("current_user", "");
+        var userId = ResolveCurrentUserId();
         if (string.IsNullOrWhiteSpace(userId))
         {
+            await AppLogger.Warn("LoadUserAsync: userId пуст, показываем экран логина");
             await Navigation.PushModalAsync(new NavigationPage(loginPage));
             return;
         }
@@ -219,16 +227,16 @@ public partial class MainPage
 
     }
 
-    private TaskCard CreateTaskCard(TaskModel task)
+    private TaskCard CreateTaskCard(TaskModel taskModel)
     {
         var card = new TaskCard
         {
             TaskApi = taskApi,
-            Item = task,
-            Title = task.Name,
-            DaysPassed = task.DaysPassed(),
-            Cost = task.Reward,
-            SwapCost = task.Swap,
+            Item = taskModel,
+            Title = taskModel.Name,
+            DaysPassed = taskModel.DaysPassed(),
+            Cost = taskModel.Reward,
+            SwapCost = taskModel.Swap,
             HorizontalOptions = LayoutOptions.Fill
         };
 
@@ -245,7 +253,7 @@ public partial class MainPage
             var currentTaskIds = CardsHost.Children
                 .OfType<TaskCard>()
                 .Select(c => c.Item?.TaskId)
-                .Where(id => !string.IsNullOrEmpty(id))
+                .Where(id => id != null)
                 .ToHashSet();
 
             var candidates = allTasks
