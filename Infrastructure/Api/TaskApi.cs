@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using Core;
 using Core.Domain;
-using Domain.Models;
+using Core.Interfaces;
 using Infrastructure.Utils;
 
 namespace Infrastructure.Api;
@@ -30,7 +30,6 @@ public sealed class TaskApi: ITaskApi
             try
             {
                 var fullTask = await GetTaskAsync(task.UserTaskId.ToString(), ct);
-                await AppLogger.Info($"экстендед инфо из таскапи {fullTask?.ExtendedInfo}");
                 if (fullTask != null) result.Add(fullTask);
             }
             catch (Exception e)
@@ -57,11 +56,18 @@ public sealed class TaskApi: ITaskApi
             ct);
     }
     
-    public async Task<bool> SwapTaskAsync(string taskId, CancellationToken ct = default)
+    public async Task<string?> GetModerationStatusAsync(string userTaskId, CancellationToken ct = default)
     {
-        if (useStub) return true;
-        var resp = await httpClient.PostAsync(ApiRoutes.SubmitTask(taskId), content: null, ct);
-        return resp.IsSuccessStatusCode;
+        return await httpClient.GetStringAsync(
+                ApiRoutes.ModerationStatus(userTaskId),
+                    ct);
+    }
+    
+    public async Task<TaskModel?> SwapTaskAsync(string taskId, CancellationToken ct = default)
+    {
+        return await httpClient.GetFromJsonAsync<TaskModel>(
+            ApiRoutes.SwapTask(taskId),
+            ct);
     }
 
     public async Task<bool> SubmitAsync(string taskId, IEnumerable<string> photoPaths, CancellationToken ct = default)

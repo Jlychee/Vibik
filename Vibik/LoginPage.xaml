@@ -12,64 +12,90 @@
                    VerticalTextAlignment="Center"
                    Padding="0,0,0,74"/>
             
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="login_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="UsernameEntry"
-                           Placeholder="Логин"
-                           FontSize="20"
-                           MaxLength="50" 
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                </StackLayout>
+            <!-- ЛОГИН -->
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*">
 
+                <!-- Иконка логина слева -->
+                <Image Grid.Row="0"
+                       Grid.Column="0"
+                       Source="login_icon.svg"
+                       WidthRequest="24"
+                       HeightRequest="24"
+                       VerticalOptions="Center" />
+
+                <!-- Поле логина с таким же отступом, как у пароля -->
+                <Entry Grid.Row="0"
+                       Grid.Column="1"
+                       x:Name="UsernameEntry"
+                       Placeholder="Логин"
+                       FontSize="20"
+                       MaxLength="50"
+                       TextColor="Black"
+                       PlaceholderColor="#A3A3A3"
+                       BackgroundColor="Transparent"
+                       ClearButtonVisibility="WhileEditing"
+                       Margin="12,0,0,0" />
+
+                <!-- Линия под всей строкой -->
                 <BoxView Grid.Row="1"
+                         Grid.ColumnSpan="2"
                          HeightRequest="1.5"
                          Color="Black"
-                         WidthRequest="260"/>
+                         HorizontalOptions="FillAndExpand" />
             </Grid>
+
             
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="passoword_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="PasswordEntry"
-                           Placeholder="Пароль"
-                           IsPassword="True"
-                           FontSize="20"
-                           MaxLength="25" 
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                    <ImageButton
-                        x:Name="TogglePasswordVisibilityButton"
-                        Source="eye_hide.png"
-                        Clicked="OnTogglePasswordVisibilityClicked"
-                        MaximumHeightRequest="24"
-                        MaximumWidthRequest="24"
-                        WidthRequest="15"
-                        HeightRequest="15"
-                        VerticalOptions="Center" 
-                        HorizontalOptions="End"/>
-                </StackLayout>
+            <!-- ПАРОЛЬ -->
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*,Auto">
 
+                <!-- Иконка замка слева -->
+                <Image Grid.Row="0"
+                       Grid.Column="0"
+                       Source="passoword_icon.svg"
+                       WidthRequest="24"
+                       HeightRequest="24"
+                       VerticalOptions="Center" />
+
+                <!-- Поле ввода пароля с таким же отступом, как у логина (12) -->
+                <Entry Grid.Row="0"
+                       Grid.Column="1"
+                       x:Name="PasswordEntry"
+                       Placeholder="Пароль"
+                       IsPassword="True"
+                       FontSize="20"
+                       MaxLength="25"
+                       TextColor="Black"
+                       PlaceholderColor="#A3A3A3"
+                       BackgroundColor="Transparent"
+                       ClearButtonVisibility="WhileEditing"
+                       Margin="12,0,0,0" />
+
+                <!-- Глазик справа, поменьше -->
+                <ImageButton Grid.Row="0"
+                             Grid.Column="2"
+                             x:Name="TogglePasswordVisibilityButton"
+                             Source="eye_hide.svg"
+                             Clicked="OnTogglePasswordVisibilityClicked"
+                             MaximumHeightRequest="24"
+                             MaximumWidthRequest="24"
+                             WidthRequest="16"
+                             HeightRequest="16"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             BackgroundColor="Transparent"
+                             Padding="0"
+                             Margin="8,0,0,0" />
+
+                <!-- Линия под всем полем -->
                 <BoxView Grid.Row="1"
+                         Grid.ColumnSpan="3"
                          HeightRequest="1.5"
                          Color="Black"
-                         WidthRequest="260" />
+                         HorizontalOptions="FillAndExpand" />
             </Grid>
+
 
             <Label x:Name="ErrorLabel"
                    TextColor="Red"
@@ -92,7 +118,7 @@
             </Button>
             <Button Text="Зарегистрироваться"
                     Clicked="OnRegisterClicked"
-                    Margin="0,60,0,0"
+                    Margin="0,10,0,0"
                     HeightRequest="60"
                     CornerRadius="18"
                     BackgroundColor="{StaticResource NavySeal}"
@@ -101,6 +127,7 @@
                     HorizontalOptions="FillAndExpand">
             </Button>
             <Button Text="Забрать последние логи"
+                    IsVisible="False"
                     Clicked="OnShareLatestLogClicked"></Button>
         </StackLayout>
     </ContentPage.Content>

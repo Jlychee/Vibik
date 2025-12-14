@@ -1,6 +1,6 @@
 using Core.Interfaces;
 
-namespace Utils;
+namespace Vibik.Utils;
 
 public static class PhotoServiceExtensions
 {

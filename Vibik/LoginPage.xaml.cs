@@ -1,4 +1,3 @@
-using Core.Application;
 using Core.Interfaces;
 using Vibik.Utils;
 
@@ -14,6 +13,7 @@ public partial class LoginPage
         InitializeComponent();
         this.userApi = userApi;
         this.authService = authService;
+        NavigationPage.SetHasNavigationBar(this, false);
     }
 
     private async void OnLoginClicked(object sender, EventArgs e)

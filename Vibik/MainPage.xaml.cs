@@ -1,10 +1,7 @@
 ﻿using System.Collections.ObjectModel;
-using Core;
-using Core.Application;
 using Core.Domain;
 using Core.Interfaces;
 using Infrastructure.Api;
-using Domain.Models;
 using Vibik.Resources.Components;
 using Task = System.Threading.Tasks.Task;
 using Vibik.Utils;
@@ -14,6 +11,8 @@ namespace Vibik;
 public partial class MainPage
 {
     private bool taskLoaded;
+    private static bool taskShouldBeChanged;
+
     private readonly Random random = new();
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
@@ -22,27 +21,55 @@ public partial class MainPage
     private readonly IWeatherApi weatherApi;
     private readonly IAuthService authService;
 
-
     private int money;
     private int level;
     private ImageSource? weatherImage;
     private ObservableCollection<View> VisibleCards { get; } = new();
 
-    public ImageSource? WeatherImage { get => weatherImage; set { weatherImage = value; OnPropertyChanged(); } }
+    public ImageSource? WeatherImage
+    {
+        get => weatherImage;
+        set { weatherImage = value; OnPropertyChanged(); }
+    }
+
     private string weatherTemp = "—";
     private string weatherInfoAboutSky = "Загружаем погоду...";
     private string weatherInfoAboutFallout = string.Empty;
     private WeatherInfo? lastWeather;
 
+    public int Level
+    {
+        get => level;
+        set { level = value; OnPropertyChanged(); }
+    }
 
-    public int Level { get => level; set { level = value; OnPropertyChanged(); } }
-    public int Money { get => money; set { money = value; OnPropertyChanged(); } }
-    public string WeatherTemp { get => weatherTemp; set { weatherTemp = value; OnPropertyChanged(); } }
-    public string WeatherInfoAboutSky { get => weatherInfoAboutSky; set { weatherInfoAboutSky = value; OnPropertyChanged(); } }
-    public string WeatherInfoAboutFallout { get => weatherInfoAboutFallout; set { weatherInfoAboutFallout = value; OnPropertyChanged(); } }
-    
+    public int Money
+    {
+        get => money;
+        set { money = value; OnPropertyChanged(); }
+    }
+
+    public string WeatherTemp
+    {
+        get => weatherTemp;
+        set { weatherTemp = value; OnPropertyChanged(); }
+    }
+
+    public string WeatherInfoAboutSky
+    {
+        get => weatherInfoAboutSky;
+        set { weatherInfoAboutSky = value; OnPropertyChanged(); }
+    }
+
+    public string WeatherInfoAboutFallout
+    {
+        get => weatherInfoAboutFallout;
+        set { weatherInfoAboutFallout = value; OnPropertyChanged(); }
+    }
+
     private List<TaskModel>? completedTasks;
     private bool showCompleted;
+
     public bool ShowCompleted
     {
         get => showCompleted;
@@ -54,6 +81,7 @@ public partial class MainPage
             _ = ApplyFilter();
         }
     }
+
     private bool noTasks;
     public bool NoTasks
     {
@@ -66,7 +94,12 @@ public partial class MainPage
         }
     }
 
-    public MainPage(ITaskApi taskApi, IUserApi userApi, LoginPage loginPage, IWeatherApi weatherApi, IAuthService authService)
+    public MainPage(
+        ITaskApi taskApi,
+        IUserApi userApi,
+        LoginPage loginPage,
+        IWeatherApi weatherApi,
+        IAuthService authService)
     {
         InitializeComponent();
         BindingContext = this;
@@ -76,7 +109,9 @@ public partial class MainPage
         this.loginPage = loginPage;
         this.authService = authService;
     }
-    
+
+    public static void MarkTaskShouldBeChanged() => taskShouldBeChanged = true;
+
     private async Task LoadWeatherAsync()
     {
         try
@@ -112,7 +147,6 @@ public partial class MainPage
         WeatherInfoAboutFallout = WeatherUtils.BuildWeatherInfoAboutFallout(weather);
         var normalized = weather.Condition.ToLowerInvariant();
         WeatherImage = WeatherUtils.DefineWeatherImage(normalized);
-
     }
 
     private string? ResolveCurrentUserId()
@@ -135,10 +169,11 @@ public partial class MainPage
         return !string.IsNullOrWhiteSpace(userId) &&
                !string.IsNullOrWhiteSpace(accessToken);
     }
-    
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
         if (!await EnsureAuthorizedAsync())
         {
             await AppLogger.Warn("пользователь не авторизован");
@@ -146,18 +181,28 @@ public partial class MainPage
             return;
         }
 
-        var user = LoadUserAsync();
-        var weather = LoadWeatherAsync();
+        var userTask = LoadUserAsync();
+        var weatherTask = LoadWeatherAsync();
 
-        var tasks = Task.CompletedTask;
-        if (!taskLoaded)
+        Task tasksTask;
+        if (!taskLoaded || taskShouldBeChanged)
         {
-            tasks = LoadTasksAsync();
+            await AppLogger.Info(
+                $"OnAppearing: загрузка задач, taskLoaded={taskLoaded}, taskShouldBeChanged={taskShouldBeChanged}");
+
             taskLoaded = true;
+            taskShouldBeChanged = false;
+            tasksTask = LoadTasksAsync();
         }
-        await Task.WhenAll(user, weather, tasks);
+        else
+        {
+            await AppLogger.Info("OnAppearing: обновляем только статусы модерации");
+            tasksTask = RefreshModerationStatusesAsync();
+        }
+
+        await Task.WhenAll(userTask, weatherTask, tasksTask);
     }
-    
+
     private async Task LoadUserAsync()
     {
         var userId = ResolveCurrentUserId();
@@ -192,21 +237,96 @@ public partial class MainPage
 
             foreach (var t in tasks)
             {
-                await AppLogger.Info($"  task: id={t.TaskId}, name={t.Name}, reward={t.Reward}");
+                await AppLogger.Info(
+                    $"  task: userTaskId={t.UserTaskId}, taskId={t.TaskId}, name={t.Name}, reward={t.Reward}");
             }
 
             allTasks.Clear();
             allTasks.AddRange(tasks);
-            await ApplyFilter();
+            await RefreshModerationStatusesAsync();
         }
         catch (Exception ex)
         {
             await AppAlerts.ProfileUploadFailed(ex.Message);
             VisibleCards.Clear();
+            CardsHost.Children.Clear();
             NoTasks = true;
         }
     }
-    
+
+    private readonly Dictionary<int, ModerationStatus> lastKnownModerationStatuses = new();
+
+    private async Task RefreshModerationStatusesAsync()
+    {
+        await AppLogger.Info("RefreshModerationStatusesAsync: старт");
+
+        foreach (var task in allTasks)
+        {
+            string? statusString;
+            try
+            {
+                statusString = await taskApi.GetModerationStatusAsync(task.UserTaskId.ToString());
+            }
+            catch (Exception ex)
+            {
+                await AppLogger.Warn(
+                    $"Не удалось получить статус модерации для userTaskId={task.UserTaskId}: {ex.Message}");
+                continue;
+            }
+
+            var normalized = statusString?
+                .Trim()
+                .Trim('"')
+                .ToLowerInvariant();
+
+            var newStatus = normalized switch
+            {
+                "waiting" => ModerationStatus.Pending,
+                "default" => ModerationStatus.None,
+                "approved" or "approve" or "success" => ModerationStatus.Approved,
+                "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
+                _ => ModerationStatus.None
+            };
+
+            lastKnownModerationStatuses.TryGetValue(task.UserTaskId, out var oldStatus);
+            lastKnownModerationStatuses[task.UserTaskId] = newStatus;
+
+            await AppLogger.Info(
+                $"RefreshModerationStatusesAsync: userTaskId={task.UserTaskId}, rawStatus={statusString ?? "<null>"}, normalized={normalized ?? "<null>"}, mapped={newStatus}");
+
+            if (newStatus != oldStatus)
+            {
+                await AppLogger.Info(
+                    $"Статус задачи userTaskId={task.UserTaskId} изменился: {oldStatus} -> {newStatus}");
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    switch (newStatus)
+                    {
+                        case ModerationStatus.Approved:
+                            task.Completed = true;
+                            ShowModerationBanner(
+                                $"Задание \"{task.Name}\" одобрено! Награда начислена.",
+                                Color.FromArgb("#D9F8D9"));
+                            break;
+
+                        case ModerationStatus.Rejected:
+                            ShowModerationBanner(
+                                $"Задание \"{task.Name}\" отклонено. Попробуйте ещё раз.",
+                                Color.FromArgb("#FFE0E0"));
+                            break;
+                    }
+                });
+                _ = HighlightCardAsync(task);
+
+            }
+
+            task.ModerationStatus = newStatus;
+        }
+
+        await ApplyFilter();
+    }
+
     private async Task EnsureCompletedTasksLoadedAsync()
     {
         if (completedTasks != null)
@@ -230,7 +350,19 @@ public partial class MainPage
     {
         CardsHost.Children.Clear();
         VisibleCards.Clear();
-        var activeTasks = allTasks.Where(t => !t.Completed).ToList();
+
+        var usedIds = new HashSet<int>();
+        var activeTasks = allTasks
+            .Where(t => !t.Completed && t.ModerationStatus != ModerationStatus.Pending)
+            .ToList();
+
+        if (activeTasks.Count < 4)
+        {
+            await AppLogger.Info(
+                $"ApplyFilter: активных задач меньше 4: {activeTasks.Count}. " +
+                "Сервер не выдал достаточно активных задач для заполнения всех слотов.");
+        }
+
         var activeCount = Math.Min(4, activeTasks.Count);
 
         for (var i = 0; i < activeCount; i++)
@@ -239,12 +371,61 @@ public partial class MainPage
             var card = CreateTaskCard(task);
             CardsHost.Children.Add(card);
             VisibleCards.Add(card);
+            usedIds.Add(task.UserTaskId);
         }
+
+        var pending = allTasks
+            .Where(t => t.ModerationStatus == ModerationStatus.Pending &&
+                        !usedIds.Contains(t.UserTaskId))
+            .ToList();
+
+        if (pending.Count > 0)
+        {
+            var header = new Label
+            {
+                Text = "Ожидают модерации",
+                FontSize = 18,
+                FontAttributes = FontAttributes.Bold,
+                Margin = new Thickness(16, 24, 16, 8),
+                TextColor = (Color)Application.Current!.Resources["MilkChocolate"]
+            };
+            CardsHost.Children.Add(header);
+
+            foreach (var t in pending)
+            {
+                var card = CreateTaskCard(t);
+
+                card.Title = $"⏳ {t.Name}";
+                card.BackgroundColor = (Color)Application.Current!.Resources["LightYelloww"];
+                card.Opacity = 1.0;
+                card.GestureRecognizers.Add(new TapGestureRecognizer
+                {
+                    Command = new Command(async () => await OpenTaskDetailsAsync(t))
+                });
+
+                card.RefreshCommand = new Command(async () =>
+                {
+                    await DisplayAlert(
+                        "На модерации",
+                        "Это задание уже отправлено на модерацию и не может быть заменено, пока идёт проверка.",
+                        "OK");
+                });
+
+                CardsHost.Children.Add(card);
+                VisibleCards.Add(card);
+                usedIds.Add(t.UserTaskId);
+            }
+        }
+
         if (ShowCompleted)
         {
             await EnsureCompletedTasksLoadedAsync();
 
             var done = completedTasks!
+                .Concat(allTasks.Where(t => t.Completed))
+                .GroupBy(t => t.UserTaskId)
+                .Select(g => g.First())
+                .Where(t => !usedIds.Contains(t.UserTaskId))
                 .ToList();
 
             if (done.Count > 0)
@@ -255,15 +436,38 @@ public partial class MainPage
                     FontSize = 18,
                     FontAttributes = FontAttributes.Bold,
                     Margin = new Thickness(16, 24, 16, 8),
-                    TextColor = (Color)Application.Current.Resources["MilkChocolate"]
+                    TextColor = (Color)Application.Current!.Resources["MilkChocolate"]
                 };
                 CardsHost.Children.Add(header);
 
-                foreach (var completedCard in done.Select(task => CreateTaskCard(task)))
+                foreach (var task in done)
                 {
+                    var completedCard = CreateTaskCard(task);
                     completedCard.Opacity = 0.7;
+                    switch (task.ModerationStatus)
+                    {
+                        case ModerationStatus.Approved:
+                            completedCard.Title = $"✅ {task.Name}";
+                            completedCard.BackgroundColor = Color.FromArgb("#D9F8D9");
+                            break;
+
+                        case ModerationStatus.Rejected:
+                            completedCard.Title = $"❌ {task.Name}";
+                            completedCard.BackgroundColor = Color.FromArgb("#FFE0E0");
+                            break;
+
+                        default:
+                            completedCard.BackgroundColor = Color.FromArgb("#F2F2F2");
+                            break;
+                    }
                     CardsHost.Children.Add(completedCard);
                     VisibleCards.Add(completedCard);
+                    usedIds.Add(task.UserTaskId);
+                    completedCard.GestureRecognizers.Add(new TapGestureRecognizer
+                    {
+                        Command = new Command(async () => await OpenTaskDetailsAsync(task))
+                    });
+
                 }
             }
         }
@@ -271,7 +475,60 @@ public partial class MainPage
         NoTasks = !CardsHost.Children.OfType<TaskCard>().Any();
 
         _ = AppLogger.Info(
-            $"ApplyFilterAsync: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}, ShowCompleted = {ShowCompleted}");
+            $"ApplyFilter: VisibleCards = {VisibleCards.Count}, NoTasks = {NoTasks}, " +
+            $"PendingCount = {pending.Count}, ShowCompleted = {ShowCompleted}");
+    }
+    private async Task HighlightCardAsync(TaskModel taskModel)
+    {
+        if (taskModel == null)
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var card = CardsHost.Children
+                .OfType<TaskCard>()
+                .FirstOrDefault(c => c.Item?.UserTaskId == taskModel.UserTaskId);
+
+            if (card == null)
+                return;
+
+            try
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    await card.ScaleTo(1.03, 80, Easing.CubicOut);
+                    await card.ScaleTo(1.0, 80, Easing.CubicIn);
+                }
+            }
+            catch
+            {
+            }
+        });
+    }
+
+    private async Task OpenTaskDetailsAsync(TaskModel taskModel)
+    {
+        if (taskModel == null)
+            return;
+
+        try
+        {
+            taskModel.ExtendedInfo ??= new TaskModelExtendedInfo();
+            taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
+
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await Navigation.PushAsync(new TaskDetailsPage(taskModel, taskApi));
+            });
+        }
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await DisplayAlert("Ошибка", $"Не удалось открыть задание: {ex.Message}", "OK");
+            });
+            await AppLogger.Error($"OpenTaskDetailsAsync error: {ex}");
+        }
     }
 
     private TaskCard CreateTaskCard(TaskModel taskModel)
@@ -286,7 +543,10 @@ public partial class MainPage
             SwapCost = taskModel.Swap,
             HorizontalOptions = LayoutOptions.Fill
         };
-
+        var hasMoneyForSwap = Money >= taskModel.Swap;
+        card.CoinsColor = hasMoneyForSwap
+            ? Color.FromArgb("#42AD91")
+            : Color.FromArgb("#F37E6C");
         card.RefreshCommand = new Command(async () =>
         {
             var current = card.Item;
@@ -297,29 +557,24 @@ public partial class MainPage
             if (!confirmed)
                 return;
 
-            var currentTaskIds = CardsHost.Children
-                .OfType<TaskCard>()
-                .Select(c => c.Item?.TaskId)
-                .Where(id => id != null)
-                .ToHashSet();
+            try
+            {
+                var candidate = await taskApi.SwapTaskAsync(current.UserTaskId.ToString());
+                card.Item = candidate;
+                card.Title = candidate.Name;
+                card.DaysPassed = candidate.DaysPassed();
+                card.Cost = candidate.Reward;
+                card.SwapCost = candidate.Swap;
+                var enoughNow = Money >= candidate.Swap;
+                card.CoinsColor = enoughNow
+                    ? Color.FromArgb("#2E7D32")
+                    : Color.FromArgb("#C62828");
 
-            var candidates = allTasks
-                .Where(t => !t.Completed && !currentTaskIds.Contains(t.TaskId))
-                .ToList();
-
-            if (candidates.Count == 0)
+            }
+            catch
             {
                 await AppAlerts.NoNewTasks();
-                return;
             }
-
-            var next = candidates[random.Next(candidates.Count)];
-
-            card.Item = next;
-            card.Title = next.Name;
-            card.DaysPassed = next.DaysPassed();
-            card.Cost = next.Reward;
-            card.SwapCost = next.Swap;
         });
 
         return card;
@@ -340,4 +595,50 @@ public partial class MainPage
     {
         await Navigation.PushAsync(new ProfilePage(userApi, loginPage, authService, taskApi));
     }
-}   
+    private bool isModerationBannerVisible;
+    public bool IsModerationBannerVisible
+    {
+        get => isModerationBannerVisible;
+        set
+        {
+            if (isModerationBannerVisible == value) return;
+            isModerationBannerVisible = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string moderationBannerText = string.Empty;
+    public string ModerationBannerText
+    {
+        get => moderationBannerText;
+        set
+        {
+            if (moderationBannerText == value) return;
+            moderationBannerText = value;
+            OnPropertyChanged();
+        }
+    }
+    private void ShowModerationBanner(string text, Color background)
+    {
+        ModerationBannerText = text;
+        ModerationBannerColor = background;
+        IsModerationBannerVisible = true;
+    }
+
+    private Color moderationBannerColor = Colors.Transparent;
+    public Color ModerationBannerColor
+    {
+        get => moderationBannerColor;
+        set
+        {
+            if (moderationBannerColor == value) return;
+            moderationBannerColor = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void OnCloseModerationBannerClicked(object sender, EventArgs e)
+    {
+        IsModerationBannerVisible = false;
+    }
+}

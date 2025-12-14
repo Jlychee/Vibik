@@ -1,7 +1,4 @@
-using System.Text.RegularExpressions;
-using Domain.Models;
-
-namespace Utils;
+namespace Vibik.Utils;
 
 public static class PhotoService
 {

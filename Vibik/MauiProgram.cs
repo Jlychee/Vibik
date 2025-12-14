@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Core;
-using Core.Application;
 using Core.Interfaces;
 using Infrastructure.Api;
 using Infrastructure.Networking;
 using Infrastructure.Services;
+using Microsoft.Maui.Handlers;
 using Vibik.Utils;
 using Vibik.Services;
 
@@ -41,6 +41,10 @@ public static class MauiProgram
 #if ANDROID
             //new Uri("http://158.160.105.104:5000");
             new Uri("http://89.169.162.5:5000");
+            EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, view) =>
+            {
+                handler.PlatformView.Background = null;
+            });
 #else
             //new Uri("https://158.160.105.104:5000");
         new Uri("http://89.169.162.5:5000");

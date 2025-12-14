@@ -1,5 +1,3 @@
-using Domain.Models;
-
 namespace Core.Domain;
 
 public class TaskModel
@@ -15,4 +13,7 @@ public class TaskModel
 
     private const double MagicConst = 0.2;
     public int Swap => (int)(Reward * MagicConst);
+    public ModerationStatus ModerationStatus {get; set;}
+    public bool IsPendingModeration => ModerationStatus == ModerationStatus.Pending;
+
 }

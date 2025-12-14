@@ -1,6 +1,6 @@
-using Domain.Models;
+using Core.Domain;
 
-namespace Core.Application;
+namespace Core.Interfaces;
 
 public interface IWeatherApi
 {

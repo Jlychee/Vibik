@@ -20,11 +20,11 @@
               ColumnSpacing="14"
               RowSpacing="8">
 
-            <!-- Иконка слева (типа камера) -->
+            <!-- Иконка слева -->
             <Image Grid.RowSpan="2" Grid.Column="0"
                    WidthRequest="48" HeightRequest="48"
                    Aspect="AspectFit"
-                   Source="{Binding IconSource, TargetNullValue=default_task_photo.png}" />
+                   Source="{Binding IconSource, TargetNullValue=default_task_photo.svg}" />
 
             <!-- Заголовок и строчка «со старта прошло» -->
             <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="4">
@@ -43,7 +43,7 @@
                    FontSize="14"
                    TextColor="{StaticResource White}" />
 
-            <!-- Кнопка «свап» и монеты справа -->
+            <!-- Кнопка свап и монеты -->
             <VerticalStackLayout Grid.Column="2" Grid.RowSpan="2"
                                  Spacing="2"
                                  HorizontalOptions="End"

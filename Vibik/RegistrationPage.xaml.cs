@@ -1,4 +1,3 @@
-using Core.Application;
 using Core.Interfaces;
 using Infrastructure.Services;
 using Vibik.Utils;
@@ -15,6 +14,7 @@ public partial class RegistrationPage
         InitializeComponent();
         this.userApi = userApi;
         this.authService = authService;
+        NavigationPage.SetHasNavigationBar(this, false);
     }
 
     private async void OnRegisterClicked(object sender, EventArgs e)
@@ -52,11 +52,6 @@ public partial class RegistrationPage
                 ShowError("Не удалось создать аккаунт.");
                 return;
             }
-            // if (authService is not null)
-            // {
-            //     await authService.SetTokensAsync( login., login.RefreshToken, login.Username);
-            // }
-            
             Preferences.Set("current_user", login.Username);
             Preferences.Set("display_name", login.DisplayName);
 

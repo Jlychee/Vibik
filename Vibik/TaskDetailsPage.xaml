@@ -27,6 +27,9 @@
                             <Label Text="{Binding Description}"
                                    FontSize="20"
                                    TextColor="Black"/>
+                            <Label Text="{Binding PhotoCountLabel}"
+                                   FontSize="20"
+                                   TextColor="Black"/>
                             <!-- сетка для фоток(горизонтальный скролл -->
                             <ScrollView Orientation="Horizontal">
                                 <Grid x:Name="PhotoShotsGrid"

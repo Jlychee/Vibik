@@ -1,8 +1,7 @@
 using System.Windows.Input;
 using Core;
-using Core.Application;
 using Core.Domain;
-using Domain.Models;
+using Core.Interfaces;
 
 namespace Vibik.Resources.Components;
 
@@ -56,7 +55,7 @@ public partial class TaskCard
         get => (int)GetValue(AvailableCoinsProperty);
         set => SetValue(AvailableCoinsProperty, value);
     }
-    
+
     public static readonly BindableProperty CoinsColorProperty =
         BindableProperty.Create(nameof(CoinsColor), typeof(Color), typeof(TaskCard), Colors.Gray);
     public Color CoinsColor { get => (Color)GetValue(CoinsColorProperty); set => SetValue(CoinsColorProperty, value); }

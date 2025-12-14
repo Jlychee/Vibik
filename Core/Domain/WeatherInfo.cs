@@ -1,4 +1,4 @@
-namespace Domain.Models;
+namespace Core.Domain;
 
 public class WeatherInfo
 {

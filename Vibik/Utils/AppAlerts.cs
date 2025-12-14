@@ -1,5 +1,3 @@
-using Utils;
-
 namespace Vibik.Utils;
 
 public static class AppAlerts

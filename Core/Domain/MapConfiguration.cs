@@ -1,4 +1,4 @@
-namespace Vibik.Core.Domain;
+namespace Core.Domain;
 
 public record MapConfiguration(
     double CenterLatitude,

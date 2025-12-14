@@ -4,6 +4,31 @@
              x:Class="Vibik.MainPage">
 
     <Grid BackgroundColor="{StaticResource NavySeal}">
+        <!-- 🔔 Баннер модерации -->
+        <Frame Grid.Row="0"
+               Padding="12"
+               Margin="16,16,16,0"
+               CornerRadius="16"
+               HasShadow="True"
+               VerticalOptions="Start"
+               IsVisible="{Binding IsModerationBannerVisible}"
+               BackgroundColor="{Binding ModerationBannerColor}">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="{Binding ModerationBannerText}"
+                       VerticalOptions="Center"
+                       TextColor="Black"
+                       LineBreakMode="WordWrap" />
+
+                <ImageButton Grid.Column="1"
+                             Source="close_icon.svg"
+                             WidthRequest="20"
+                             HeightRequest="20"
+                             BackgroundColor="Transparent"
+                             Padding="0"
+                             Clicked="OnCloseModerationBannerClicked" />
+            </Grid>
+        </Frame>
+
         <ScrollView>
             <VerticalStackLayout x:Name="PageStack"
                                  Spacing="18"
@@ -17,7 +42,7 @@
                            BackgroundColor="{StaticResource LightYelloww}"
                            HasShadow="False">
                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                            <Image Source="level.png"
+                            <Image Source="level.svg"
                                    WidthRequest="24"
                                    HeightRequest="24"
                                    Aspect="AspectFit"/>
@@ -34,7 +59,7 @@
                            HorizontalOptions="End">
                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
                             <Label Text="{Binding Money}" FontSize="20" TextColor="{StaticResource TextBrown}" />
-                            <Image Source="money.png"
+                            <Image Source="money.svg"
                                    WidthRequest="24"
                                    HeightRequest="24"
                                    Aspect="AspectFit"/>
@@ -51,7 +76,7 @@
                     <Grid ColumnDefinitions="112,Auto,1*"
                           ColumnSpacing="14">
                         <Image Grid.Column="0"
-                               Source="{Binding WeatherImage, TargetNullValue=cloudy_weather.png}"
+                               Source="{Binding WeatherImage, TargetNullValue=cloudy_weather.svg}"
                                HorizontalOptions="Start"
                                VerticalOptions="Center"
                                MaximumHeightRequest="100.59"
@@ -138,23 +163,26 @@
                HeightRequest="70">
             <Grid ColumnDefinitions="*,*,*"
                   HorizontalOptions="FillAndExpand">
-                <ImageButton Grid.Column="0"
-                             Source="home_icon.png"
-                             BackgroundColor="Transparent"
-                             HeightRequest="32"
-                             WidthRequest="32"
-                             Clicked="OnHomeClicked"/>
                 <ImageButton Grid.Column="1"
-                             Source="map_icon.png"
+                             Source="map_icon.svg"
                              BackgroundColor="Transparent"
                              HeightRequest="32"
                              WidthRequest="32"
+                             Aspect="Fill"
                              Clicked="OnMapClicked"/>
+                <ImageButton Grid.Column="0"
+                             Source="home_icon.svg"
+                             BackgroundColor="Transparent"
+                             HeightRequest="53"
+                             WidthRequest="53"
+                             Aspect="Fill"
+                             Clicked="OnHomeClicked"/>
                 <ImageButton Grid.Column="2"
-                             Source="profile_icon.png"
+                             Source="profile_icon.svg"
                              BackgroundColor="Transparent"
                              HeightRequest="32"
                              WidthRequest="32"
+                             Aspect="Fill"
                              Clicked="OnProfileClicked"/>
             </Grid>
         </Frame>

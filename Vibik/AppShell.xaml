@@ -4,7 +4,13 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Vibik"
-    Title="Vibik">
+    Title="Vibik"
+    Shell.BackgroundColor="{StaticResource MilkChocolate}"
+    Shell.TitleColor="{StaticResource LightYelloww}"
+    Shell.ForegroundColor="{StaticResource LightYelloww}"
+    Shell.TabBarBackgroundColor="{StaticResource NavySeal}"
+    Shell.TabBarTitleColor="{StaticResource LightYelloww}"
+    Shell.TabBarUnselectedColor="{StaticResource MilkChocolate}">
 
     <ShellContent
         Title="Home"

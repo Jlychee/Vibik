@@ -1,7 +1,6 @@
 using Core.Domain;
-using Domain.Models;
 
-namespace Core.Application;
+namespace Core.Interfaces;
 
 public interface IUserApi
 {

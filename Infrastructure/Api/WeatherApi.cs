@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
-using Core.Application;
-using Domain.Models;
+using Core.Domain;
+using Core.Interfaces;
 
 namespace Infrastructure.Api;
 

@@ -1,5 +1,4 @@
 using Core.Domain;
-using Domain.Models;
 
 namespace Infrastructure.Api;
 

@@ -1,5 +1,5 @@
-using Utils;
 using System.Diagnostics;
+using Vibik.Utils;
 
 namespace Vibik.Resources.Components;
 

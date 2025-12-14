@@ -31,7 +31,7 @@
                 <HorizontalStackLayout Spacing="2"
                                        HorizontalOptions="Center">
                        
-                       <Image Source="login_icon.png"
+                       <Image Source="login_icon.svg"
                               WidthRequest="20"
                               HeightRequest="20"
                               VerticalOptions="Center" />
@@ -59,7 +59,7 @@
                            <Grid>
 
                                   <!-- Пламя: сдвигаем вниз -->
-                                  <Image Source="level_flame.png"
+                                  <Image Source="level_flame.svg"
                                          Aspect="AspectFit"
                                          VerticalOptions="End"
                                          Margin="0,-300,0,0" />
@@ -97,7 +97,7 @@
                            WidthRequest="161"
                            HeightRequest="161">
                            <Grid>
-                                  <Image Source="coins_icon.png"
+                                  <Image Source="coins_icon.svg"
                                          Aspect="AspectFit"
                                          VerticalOptions="End"
                                          Margin="0,-70,0,0"/>
@@ -131,7 +131,7 @@
                            WidthRequest="161"
                            HeightRequest="161">
                            <Grid>
-                                  <Image Source="tasks_done_icon.png"
+                                  <Image Source="tasks_done_icon.svg"
                                          Aspect="AspectFit"
                                          VerticalOptions="End"
                                          Margin="0,-70,0,0"/>
@@ -166,7 +166,7 @@
                            WidthRequest="161"
                            HeightRequest="161">
                            <Grid>
-                                  <Image Source="map_place_icon.png"
+                                  <Image Source="map_place_icon.svg"
                                          Aspect="AspectFit"
                                          VerticalOptions="End"
                                          Margin="0,-70,0,0"/>
@@ -214,23 +214,26 @@
                HeightRequest="70">
                <Grid ColumnDefinitions="*,*,*"
                      HorizontalOptions="FillAndExpand">
-                      <ImageButton Grid.Column="0"
-                                   Source="home_icon.png"
-                                   BackgroundColor="Transparent"
-                                   HeightRequest="32"
-                                   WidthRequest="32"
-                                   Clicked="OnHomeClicked"/>
                       <ImageButton Grid.Column="1"
-                                   Source="map_icon.png"
+                                   Source="map_icon.svg"
                                    BackgroundColor="Transparent"
                                    HeightRequest="32"
                                    WidthRequest="32"
+                                   Aspect="Fill"
                                    Clicked="OnMapClicked"/>
+                      <ImageButton Grid.Column="0"
+                                   Source="home_icon.svg"
+                                   BackgroundColor="Transparent"
+                                   HeightRequest="53"
+                                   WidthRequest="53"
+                                   Aspect="Fill"
+                                   Clicked="OnHomeClicked"/>
                       <ImageButton Grid.Column="2"
-                                   Source="profile_icon.png"
+                                   Source="profile_icon.svg"
                                    BackgroundColor="Transparent"
                                    HeightRequest="32"
                                    WidthRequest="32"
+                                   Aspect="Fill"
                                    Clicked="OnProfileClicked"/>
                </Grid>
         </Frame>

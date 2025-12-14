@@ -12,120 +12,167 @@
                    VerticalTextAlignment="Center"
                    Padding="0,0,0,74"/>
             
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="login_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="UsernameEntry"
-                           Placeholder="Логин"
-                           FontSize="20"
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                </StackLayout>
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*">
 
-                <BoxView Grid.Row="1"
-                         HeightRequest="1.5"
-                         Color="Black"
-                         WidthRequest="260"/>
+                   <!-- Иконка логина слева -->
+                   <Image Grid.Row="0"
+                          Grid.Column="0"
+                          Source="login_icon.svg"
+                          WidthRequest="24"
+                          HeightRequest="24"
+                          VerticalOptions="Center" />
+
+                   <!-- Поле логина с таким же отступом, как у пароля -->
+                   <Entry Grid.Row="0"
+                          Grid.Column="1"
+                          x:Name="UsernameEntry"
+                          Placeholder="Логин"
+                          FontSize="20"
+                          MaxLength="50"
+                          TextColor="Black"
+                          PlaceholderColor="#A3A3A3"
+                          BackgroundColor="Transparent"
+                          ClearButtonVisibility="WhileEditing"
+                          Margin="12,0,0,0" />
+
+                   <!-- Линия под всей строкой -->
+                   <BoxView Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            HeightRequest="1.5"
+                            Color="Black"
+                            HorizontalOptions="FillAndExpand" />
+            </Grid>
+            
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*">
+
+                   <!-- Иконка логина слева -->
+                   <Image Grid.Row="0"
+                          Grid.Column="0"
+                          Source="display_name_icon.svg"
+                          WidthRequest="24"
+                          HeightRequest="24"
+                          VerticalOptions="Center" />
+
+                   <!-- Поле логина с таким же отступом, как у пароля -->
+                   <Entry Grid.Row="0"
+                          Grid.Column="1"
+                          x:Name="DisplayNameEntry"
+                          Placeholder="Имя для отображения"
+                          FontSize="20"
+                          MaxLength="50"
+                          TextColor="Black"
+                          PlaceholderColor="#A3A3A3"
+                          BackgroundColor="Transparent"
+                          ClearButtonVisibility="WhileEditing"
+                          Margin="12,0,0,0" />
+
+                   <!-- Линия под всей строкой -->
+                   <BoxView Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            HeightRequest="1.5"
+                            Color="Black"
+                            HorizontalOptions="FillAndExpand" />
             </Grid>
 
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="display_name_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="DisplayNameEntry"
-                           Placeholder="Имя для отображения"
-                           FontSize="20"
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                </StackLayout>
+            <!-- ПАРОЛЬ -->
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*,Auto">
 
+                <!-- Иконка замка слева -->
+                <Image Grid.Row="0"
+                       Grid.Column="0"
+                       Source="passoword_icon.svg"
+                       WidthRequest="24"
+                       HeightRequest="24"
+                       VerticalOptions="Center" />
+
+                <!-- Поле ввода пароля с таким же отступом, как у логина (12) -->
+                <Entry Grid.Row="0"
+                       Grid.Column="1"
+                       x:Name="PasswordEntry"
+                       Placeholder="Пароль"
+                       IsPassword="True"
+                       FontSize="20"
+                       MaxLength="25"
+                       TextColor="Black"
+                       PlaceholderColor="#A3A3A3"
+                       BackgroundColor="Transparent"
+                       ClearButtonVisibility="WhileEditing"
+                       Margin="12,0,0,0" />
+
+                <!-- Глазик справа, поменьше -->
+                <ImageButton Grid.Row="0"
+                             Grid.Column="2"
+                             x:Name="TogglePasswordVisibilityButton"
+                             Source="eye_hide.svg"
+                             Clicked="OnTogglePasswordVisibilityClicked"
+                             MaximumHeightRequest="24"
+                             MaximumWidthRequest="24"
+                             WidthRequest="16"
+                             HeightRequest="16"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             BackgroundColor="Transparent"
+                             Padding="0"
+                             Margin="8,0,0,0" />
+
+                <!-- Линия под всем полем -->
                 <BoxView Grid.Row="1"
+                         Grid.ColumnSpan="3"
                          HeightRequest="1.5"
                          Color="Black"
-                         WidthRequest="260" />
+                         HorizontalOptions="FillAndExpand" />
             </Grid>
+<!-- ПАРОЛЬ -->
+            <Grid RowDefinitions="Auto,1"
+                  ColumnDefinitions="Auto,*,Auto">
 
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="passoword_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="PasswordEntry"
-                           Placeholder="Пароль"
-                           IsPassword="True"
-                           FontSize="20"
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                    <ImageButton
-                           x:Name="TogglePasswordVisibilityButton"
-                           Source="eye_show.png"
-                           Clicked="OnTogglePasswordVisibilityClicked"
-                           MaximumHeightRequest="24"
-                           MaximumWidthRequest="24"
-                           WidthRequest="15"
-                           HeightRequest="15"
-                           VerticalOptions="Center" 
-                           HorizontalOptions="End"/>
+                <!-- Иконка замка слева -->
+                <Image Grid.Row="0"
+                       Grid.Column="0"
+                       Source="passoword_icon.svg"
+                       WidthRequest="24"
+                       HeightRequest="24"
+                       VerticalOptions="Center" />
 
-                </StackLayout>
+                <!-- Поле ввода пароля с таким же отступом, как у логина (12) -->
+                <Entry Grid.Row="0"
+                       Grid.Column="1"
+                       x:Name="RepeatPasswordEntry"
+                       Placeholder="Повторите пароль"
+                       IsPassword="True"
+                       FontSize="20"
+                       MaxLength="25"
+                       TextColor="Black"
+                       PlaceholderColor="#A3A3A3"
+                       BackgroundColor="Transparent"
+                       ClearButtonVisibility="WhileEditing"
+                       Margin="12,0,0,0" />
 
+                <!-- Глазик справа, поменьше -->
+                <ImageButton Grid.Row="0"
+                             Grid.Column="2"
+                             x:Name="TogglePasswordRepeatVisibilityButton"
+                             Source="eye_hide.svg"
+                             Clicked="OnTogglePasswordRepeatdVisibilityClicked"
+                             MaximumHeightRequest="24"
+                             MaximumWidthRequest="24"
+                             WidthRequest="16"
+                             HeightRequest="16"
+                             HorizontalOptions="End"
+                             VerticalOptions="Center"
+                             BackgroundColor="Transparent"
+                             Padding="0"
+                             Margin="8,0,0,0" />
+
+                <!-- Линия под всем полем -->
                 <BoxView Grid.Row="1"
+                         Grid.ColumnSpan="3"
                          HeightRequest="1.5"
                          Color="Black"
-                         WidthRequest="260" />
-            </Grid>
-
-            <Grid RowDefinitions="Auto,1">
-                <StackLayout Orientation="Horizontal"
-                             Spacing="12"
-                             VerticalOptions="Center">
-                    <Image Source="passoword_icon.png"
-                           WidthRequest="24"
-                           HeightRequest="24"
-                           VerticalOptions="Center" />
-                    <Entry x:Name="RepeatPasswordEntry"
-                           Placeholder="Повторите пароль"
-                           IsPassword="True"
-                           FontSize="20"
-                           TextColor="Black"
-                           PlaceholderColor="#A3A3A3"
-                           BackgroundColor="Transparent"
-                           ClearButtonVisibility="WhileEditing" />
-                    <ImageButton
-                           x:Name="TogglePasswordRepeatVisibilityButton"
-                           Source="eye_show.png"
-                           Clicked="OnTogglePasswordRepeatdVisibilityClicked"
-                           MaximumHeightRequest="24"
-                           MaximumWidthRequest="24"
-                           WidthRequest="15"
-                           HeightRequest="15"
-                           VerticalOptions="Center" 
-                           HorizontalOptions="End"/>
-
-                </StackLayout>
-
-                <BoxView Grid.Row="1"
-                         HeightRequest="1.5"
-                         Color="Black"
-                         WidthRequest="260" />
+                         HorizontalOptions="FillAndExpand" />
             </Grid>
             <Label x:Name="ErrorLabel"
                    TextColor="Red"

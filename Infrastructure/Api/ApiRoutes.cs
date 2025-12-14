@@ -4,6 +4,7 @@ internal static class ApiRoutes
 {
     private const string Users = "api/users";
     private const string Auth = "api/Auth";
+    private const string Moderation = "api/Moderation";
 
     public static string UploadPhoto => "photos/upload";
     public static string User() => $"{Users}/get_user";
@@ -24,4 +25,9 @@ internal static class ApiRoutes
 
     public static string SubmitTask(string taskId) =>
         $"{Tasks}/submit/{Uri.EscapeDataString(taskId)}";
+    public static string SwapTask(string taskId) =>
+        $"{Tasks}/change/{Uri.EscapeDataString(taskId)}";
+
+    public static string ModerationStatus(string taskId) => 
+        $"{Moderation}/{Uri.EscapeDataString(taskId)}/get-moderation-status";
 }

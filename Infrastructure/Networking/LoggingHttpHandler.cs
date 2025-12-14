@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 
-namespace Vibik.Utils;
+namespace Infrastructure.Networking;
 
 public sealed class HttpLoggingHandler : DelegatingHandler
 {
