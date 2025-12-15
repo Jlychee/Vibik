@@ -7,7 +7,7 @@ public static class Alerts
         {
             Shell shell => shell.CurrentPage,
             NavigationPage nav => nav.CurrentPage,
-            Page page => page,
+            { } page => page,
             _ => null
         };
 

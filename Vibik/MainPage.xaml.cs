@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text;
 using Core.Domain;
 using Core.Interfaces;
 using Infrastructure.Api;
@@ -141,9 +142,13 @@ public partial class MainPage
     {
         lastWeather = weather;
         WeatherTemp = $"{Math.Round(weather.TemperatureCelsius)}°";
-        WeatherInfoAboutSky = string.IsNullOrWhiteSpace(weather.Description)
+        var description = weather.Description;
+        var sb = new StringBuilder(description);
+        sb[0] = char.ToUpper(sb[0]);
+        description = sb.ToString();
+        WeatherInfoAboutSky = string.IsNullOrWhiteSpace(description)
             ? weather.Condition
-            : weather.Description;
+            : description;
         WeatherInfoAboutFallout = WeatherUtils.BuildWeatherInfoAboutFallout(weather);
         var normalized = weather.Condition.ToLowerInvariant();
         WeatherImage = WeatherUtils.DefineWeatherImage(normalized);

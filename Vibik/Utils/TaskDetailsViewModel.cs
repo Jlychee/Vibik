@@ -2,7 +2,7 @@ using Core.Domain;
 
 namespace Vibik.Utils;
 
-public sealed class ViewModel
+public sealed class TaskDetailsViewModel
 {
     public string TaskName { get; set; }
     public string Description { get; set; }
@@ -10,7 +10,7 @@ public sealed class ViewModel
 
     public string PhotoCountLabel { get; set; }
 
-    public ViewModel(TaskModel taskModel)
+    public TaskDetailsViewModel(TaskModel taskModel)
     {
         TaskName = string.IsNullOrWhiteSpace(taskModel.Name) ? "Задание" : taskModel.Name;
         Description = taskModel.ExtendedInfo?.Description ?? string.Empty;

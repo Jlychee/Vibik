@@ -1,5 +1,4 @@
 using System.Windows.Input;
-using Core;
 using Core.Domain;
 using Core.Interfaces;
 
@@ -65,7 +64,7 @@ public partial class TaskCard
     public ICommand? RefreshCommand { get => (ICommand?)GetValue(RefreshCommandProperty); set => SetValue(RefreshCommandProperty, value); }
 
     public static readonly BindableProperty IconSourceProperty =
-        BindableProperty.Create(nameof(IconSource), typeof(ImageSource), typeof(TaskCard), default(ImageSource));
+        BindableProperty.Create(nameof(IconSource), typeof(ImageSource), typeof(TaskCard));
     public ImageSource? IconSource { get => (ImageSource?)GetValue(IconSourceProperty); set => SetValue(IconSourceProperty, value); }
 
     public static readonly BindableProperty ItemProperty =
@@ -114,6 +113,6 @@ public partial class TaskCard
         var fromGesture = (sender as TapGestureRecognizer)?.CommandParameter as TaskModel;
         var item = fromGesture ?? Item;
         if (item is null) return;
-        await Navigation.PushAsync(new TaskDetailsPage(item, TaskApi));
+        if (TaskApi != null) await Navigation.PushAsync(new TaskDetailsPage(item, TaskApi));
     }
 }

@@ -42,7 +42,7 @@ public partial class TaskDetailsPage
 
         _ = ExtendedInfo;
 
-        BindingContext = new ViewModel(this.taskModel);
+        BindingContext = new TaskDetailsViewModel(this.taskModel);
     }
 
     protected override async void OnAppearing()
@@ -100,7 +100,7 @@ public partial class TaskDetailsPage
             taskModel.Completed ||
             taskModel.ModerationStatus is ModerationStatus.Approved or ModerationStatus.Rejected;
 
-        BindingContext = new ViewModel(taskModel);
+        BindingContext = new TaskDetailsViewModel(taskModel);
     }
 
     private async void OnSendClick(object? sender, EventArgs e)
