@@ -13,19 +13,49 @@ public partial class MainPage
 {
     private bool taskLoaded;
     private static bool taskShouldBeChanged;
+    private static ModerationStatus MapModeration(string? statusString)
+    {
+        var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
+        return normalized switch
+        {
+            "waiting" => ModerationStatus.Pending,
+            "default" => ModerationStatus.None,
+            "approved" or "approve" or "success" => ModerationStatus.Approved,
+            "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
+            _ => ModerationStatus.None
+        };
+    }
 
-    private readonly Random random = new();
+    private async Task<bool> ReloadTasksRawAsync()
+    {
+        var tasks = await taskApi.GetTasksAsync();
+        await AppLogger.Info($"ReloadTasksRawAsync: получено задач = {tasks.Count}");
+
+        allTasks.Clear();
+        allTasks.AddRange(tasks);
+        return true;
+    }
+
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
     private readonly LoginPage loginPage;
     private readonly IWeatherApi weatherApi;
     private readonly IAuthService authService;
+    private readonly SemaphoreSlim refreshGate = new(1, 1);
+    private CancellationTokenSource? refreshCts;
+    private bool isVisiblePage;
+
 
     private int money;
     private int level;
     private ImageSource? weatherImage;
     private ObservableCollection<View> VisibleCards { get; } = new();
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        isVisiblePage = false;
+    }
 
     public ImageSource? WeatherImage
     {
@@ -109,6 +139,61 @@ public partial class MainPage
         this.weatherApi = weatherApi;
         this.loginPage = loginPage;
         this.authService = authService;
+        AppEventHub.RefreshRequested -= OnRefreshRequested;
+        AppEventHub.RefreshRequested += OnRefreshRequested;
+
+    }
+    private void OnRefreshRequested(AppRefreshReason reason)
+    {
+        refreshCts?.Cancel();
+        var cts = refreshCts = new CancellationTokenSource();
+
+        if (!isVisiblePage)
+        {
+            MarkTaskShouldBeChanged();
+            return;
+        }
+
+        MarkTaskShouldBeChanged();
+
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                await Task.Delay(150, cts.Token);
+                await RefreshFromEventAsync(reason, cts.Token);
+            }
+            catch (TaskCanceledException) { }
+            catch (Exception ex)
+            {
+                await AppLogger.Error("OnRefreshRequested: ошибка обновления", ex);
+            }
+        });
+    }
+
+
+    private async Task RefreshFromEventAsync(AppRefreshReason reason, CancellationToken ct)
+    {
+        if (!await EnsureAuthorizedAsync())
+            return;
+
+        await refreshGate.WaitAsync(ct);
+        try
+        {
+            await AppLogger.Info($"RefreshFromEventAsync: reason={reason}");
+            taskShouldBeChanged = true;
+            taskLoaded = false;
+
+            var userTask = LoadUserAsync();
+            var weatherTask = LoadWeatherAsync();
+            var tasksTask = LoadTasksAsync();
+
+            await Task.WhenAll(userTask, weatherTask, tasksTask);
+        }
+        finally
+        {
+            refreshGate.Release();
+        }
     }
 
     public static void MarkTaskShouldBeChanged() => taskShouldBeChanged = true;
@@ -174,39 +259,47 @@ public partial class MainPage
         return !string.IsNullOrWhiteSpace(userId) &&
                !string.IsNullOrWhiteSpace(accessToken);
     }
-
+    
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        isVisiblePage = true;
 
-        if (!await EnsureAuthorizedAsync())
+        await refreshGate.WaitAsync();
+        try
         {
-            await AppLogger.Warn("пользователь не авторизован");
-            await Navigation.PushModalAsync(new NavigationPage(loginPage));
-            return;
+            if (!await EnsureAuthorizedAsync())
+            {
+                await AppLogger.Warn("пользователь не авторизован");
+                await Navigation.PushModalAsync(new NavigationPage(loginPage));
+                return;
+            }
+
+            var userTask = LoadUserAsync();
+            var weatherTask = LoadWeatherAsync();
+
+            Task tasksTask;
+            if (!taskLoaded || taskShouldBeChanged)
+            {
+                await AppLogger.Info($"OnAppearing: загрузка задач, taskLoaded={taskLoaded}, taskShouldBeChanged={taskShouldBeChanged}");
+                taskLoaded = true;
+                taskShouldBeChanged = false;
+                tasksTask = LoadTasksAsync();
+            }
+            else
+            {
+                await AppLogger.Info("OnAppearing: обновляем только статусы модерации");
+                tasksTask = RefreshModerationStatusesAsync();
+            }
+
+            await Task.WhenAll(userTask, weatherTask, tasksTask);
         }
-
-        var userTask = LoadUserAsync();
-        var weatherTask = LoadWeatherAsync();
-
-        Task tasksTask;
-        if (!taskLoaded || taskShouldBeChanged)
+        finally
         {
-            await AppLogger.Info(
-                $"OnAppearing: загрузка задач, taskLoaded={taskLoaded}, taskShouldBeChanged={taskShouldBeChanged}");
-
-            taskLoaded = true;
-            taskShouldBeChanged = false;
-            tasksTask = LoadTasksAsync();
+            refreshGate.Release();
         }
-        else
-        {
-            await AppLogger.Info("OnAppearing: обновляем только статусы модерации");
-            tasksTask = RefreshModerationStatusesAsync();
-        }
-
-        await Task.WhenAll(userTask, weatherTask, tasksTask);
     }
+
 
     private async Task LoadUserAsync()
     {
@@ -237,17 +330,7 @@ public partial class MainPage
     {
         try
         {
-            var tasks = await taskApi.GetTasksAsync();
-            await AppLogger.Info($"LoadTasksAsync: получено задач = {tasks.Count}");
-
-            foreach (var t in tasks)
-            {
-                await AppLogger.Info(
-                    $"  task: userTaskId={t.UserTaskId}, taskId={t.TaskId}, name={t.Name}, reward={t.Reward}");
-            }
-
-            allTasks.Clear();
-            allTasks.AddRange(tasks);
+            await ReloadTasksRawAsync();
             await RefreshModerationStatusesAsync();
         }
         catch (Exception ex)
@@ -262,75 +345,76 @@ public partial class MainPage
     private readonly Dictionary<int, ModerationStatus> lastKnownModerationStatuses = new();
 
     private async Task RefreshModerationStatusesAsync()
+{
+    await AppLogger.Info("RefreshModerationStatusesAsync: старт");
+
+    var snapshot = allTasks.ToArray();
+
+    var needReloadUser = false;
+    var needReloadTasks = false;
+
+    foreach (var task in snapshot)
     {
-        await AppLogger.Info("RefreshModerationStatusesAsync: старт");
-
-        foreach (var task in allTasks)
+        string? statusString;
+        try
         {
-            string? statusString;
-            try
-            {
-                statusString = await taskApi.GetModerationStatusAsync(task.UserTaskId.ToString());
-            }
-            catch (Exception ex)
-            {
-                await AppLogger.Warn(
-                    $"Не удалось получить статус модерации для userTaskId={task.UserTaskId}: {ex.Message}");
-                continue;
-            }
-
-            var normalized = statusString?
-                .Trim()
-                .Trim('"')
-                .ToLowerInvariant();
-
-            var newStatus = normalized switch
-            {
-                "waiting" => ModerationStatus.Pending,
-                "default" => ModerationStatus.None,
-                "approved" or "approve" or "success" => ModerationStatus.Approved,
-                "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
-                _ => ModerationStatus.None
-            };
-
-            lastKnownModerationStatuses.TryGetValue(task.UserTaskId, out var oldStatus);
-            lastKnownModerationStatuses[task.UserTaskId] = newStatus;
-
-            await AppLogger.Info(
-                $"RefreshModerationStatusesAsync: userTaskId={task.UserTaskId}, rawStatus={statusString ?? "<null>"}, normalized={normalized ?? "<null>"}, mapped={newStatus}");
-
-            if (newStatus != oldStatus)
-            {
-                await AppLogger.Info(
-                    $"Статус задачи userTaskId={task.UserTaskId} изменился: {oldStatus} -> {newStatus}");
-
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    switch (newStatus)
-                    {
-                        case ModerationStatus.Approved:
-                            task.Completed = true;
-                            ShowModerationBanner(
-                                $"Задание \"{task.Name}\" одобрено! Награда начислена.",
-                                Color.FromArgb("#D9F8D9"));
-                            break;
-
-                        case ModerationStatus.Rejected:
-                            ShowModerationBanner(
-                                $"Задание \"{task.Name}\" отклонено. Попробуйте ещё раз.",
-                                Color.FromArgb("#FFE0E0"));
-                            break;
-                    }
-                });
-                _ = HighlightCardAsync(task);
-
-            }
-
-            task.ModerationStatus = newStatus;
+            statusString = await taskApi.GetModerationStatusAsync(task.UserTaskId.ToString());
+        }
+        catch (Exception ex)
+        {
+            await AppLogger.Warn($"Не удалось получить статус модерации для userTaskId={task.UserTaskId}: {ex.Message}");
+            continue;
         }
 
-        await ApplyFilter();
+        var newStatus = MapModeration(statusString);
+
+        lastKnownModerationStatuses.TryGetValue(task.UserTaskId, out var oldStatus);
+        lastKnownModerationStatuses[task.UserTaskId] = newStatus;
+
+        if (newStatus != oldStatus)
+        {
+            await AppLogger.Info($"Статус userTaskId={task.UserTaskId} изменился: {oldStatus} -> {newStatus}");
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                switch (newStatus)
+                {
+                    case ModerationStatus.Approved:
+                        task.Completed = true;
+                        ShowModerationBanner($"Задание \"{task.Name}\" одобрено! Награда начислена.", Color.FromArgb("#D9F8D9"));
+                        break;
+
+                    case ModerationStatus.Rejected:
+                        ShowModerationBanner($"Задание \"{task.Name}\" отклонено. Попробуйте ещё раз.", Color.FromArgb("#FFE0E0"));
+                        break;
+                }
+            });
+
+            _ = HighlightCardAsync(task);
+
+            if (newStatus is ModerationStatus.Approved or ModerationStatus.Rejected)
+            {
+                needReloadUser = true;
+                needReloadTasks = true;
+            }
+        }
+
+        task.ModerationStatus = newStatus;
     }
+
+    if (needReloadUser)
+        await LoadUserAsync();
+
+    if (needReloadTasks)
+    {
+        completedTasks = null;
+        await ReloadTasksRawAsync();
+        await ApplyFilter();
+        return;
+    }
+
+    await ApplyFilter();
+}
 
     private async Task EnsureCompletedTasksLoadedAsync()
     {
@@ -574,7 +658,8 @@ public partial class MainPage
                 card.CoinsColor = enoughNow
                     ? Color.FromArgb("#2E7D32")
                     : Color.FromArgb("#C62828");
-
+                MarkTaskShouldBeChanged();
+                AppEventHub.RequestRefresh(AppRefreshReason.TaskSwapped);
             }
             catch
             {

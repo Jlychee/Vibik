@@ -4,7 +4,6 @@
              x:Class="Vibik.MainPage">
 
     <Grid BackgroundColor="{StaticResource NavySeal}">
-        <!-- 🔔 Баннер модерации -->
         <Frame Grid.Row="0"
                Padding="12"
                Margin="16,16,16,0"

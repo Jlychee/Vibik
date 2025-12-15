@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Vibik.TaskDetailsPage">
+    <Grid>
     <ScrollView>
         <VerticalStackLayout Spacing="18" Padding="16">
             <Frame BackgroundColor="{StaticResource MilkChocolate}"
@@ -44,7 +45,9 @@
             
                             <!-- кнопка сдать задание -->   
                             <Button
-                                Text="Отправить задание"
+                                x:Name="SendButton"
+                                Text="{Binding SendButtonText}"
+                                IsEnabled="{Binding CanSend}"
                                 Clicked="OnSendClick"
                                 CornerRadius="16"
                                 HeightRequest="56"
@@ -57,4 +60,18 @@
             </Frame>
         </VerticalStackLayout>
     </ScrollView>
+        <Grid IsVisible="{Binding IsSending}"
+              BackgroundColor="#80000000"
+              InputTransparent="False">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="12">
+                <ActivityIndicator IsRunning="{Binding IsSending}" />
+                <Label Text="Отправляем…"
+                       TextColor="White"
+                       FontSize="16"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
 </ContentPage>

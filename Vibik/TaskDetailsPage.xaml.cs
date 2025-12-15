@@ -1,4 +1,3 @@
-using Core;
 using Core.Domain;
 using Core.Interfaces;
 using Vibik.Utils;
@@ -43,6 +42,12 @@ public partial class TaskDetailsPage
         _ = ExtendedInfo;
 
         BindingContext = new TaskDetailsViewModel(this.taskModel);
+        if (BindingContext is TaskDetailsViewModel vm)
+        {
+            vm.IsCompletedView = isCompletedView;
+            vm.ModerationStatus = taskModel.ModerationStatus;
+        }
+
     }
 
     protected override async void OnAppearing()
@@ -105,17 +110,34 @@ public partial class TaskDetailsPage
 
     private async void OnSendClick(object? sender, EventArgs e)
     {
-        if (isCompletedView)
+        var vm = BindingContext as TaskDetailsViewModel;
+
+        if (isCompletedView || taskModel.ModerationStatus == ModerationStatus.Pending)
         {
-            await DisplayAlert(
-                "Задание уже выполнено",
-                "Это задание уже прошло модерацию. Отправлять его ещё раз не нужно.",
-                "OK");
+            await DisplayAlert("На модерации", "Это задание уже отправлено и сейчас проверяется.", "OK");
             return;
         }
-
+        
         try
         {
+            var serverRaw = await taskApi.GetModerationStatusAsync(taskModel.UserTaskId.ToString());
+            var serverStatus = MapModeration(serverRaw);
+
+            taskModel.ModerationStatus = serverStatus;
+            if (vm != null) vm.ModerationStatus = serverStatus;
+
+            if (serverStatus == ModerationStatus.Pending)
+            {
+                await DisplayAlert("На модерации", "Это задание уже отправлено и сейчас проверяется.", "OK");
+                return;
+            }
+
+            if (serverStatus is ModerationStatus.Approved)
+            {
+                await DisplayAlert("Уже проверено", "Это задание уже прошло модерацию, повторно отправлять не нужно.", "OK");
+                return;
+            }
+
             var required = ExtendedInfo.PhotosRequired;
 
             var localPaths = ExtendedInfo.UserPhotos
@@ -144,6 +166,7 @@ public partial class TaskDetailsPage
                 await DisplayAlert("Нет фото", "Добавьте хотя бы одно фото", "OK");
                 return;
             }
+            if (vm != null) vm.IsSending = true;
 
             var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), localPaths);
             if (!ok)
@@ -158,11 +181,13 @@ public partial class TaskDetailsPage
             taskModel.ModerationStatus = ModerationStatus.Pending;
             MainPage.MarkTaskShouldBeChanged();
 
+            MainPage.MarkTaskShouldBeChanged();
+            AppEventHub.RequestRefresh(AppRefreshReason.TaskSent);
+
             await DisplayAlert(
                 "Отправлено",
                 "Задание отправлено на модерацию. Мы сообщим, когда оно будет проверено.",
                 "OK");
-
 
             BuildPhotosGrid();
             await Navigation.PopAsync();
@@ -180,6 +205,22 @@ public partial class TaskDetailsPage
             await AppLogger.Error(ex.ToString());
             await DisplayAlert("Ошибка", ex.Message, "OK");
         }
+        finally
+        {
+            if (vm != null) vm.IsSending = false;
+        }
+    }
+    private static ModerationStatus MapModeration(string? statusString)
+    {
+        var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
+        return normalized switch
+        {
+            "waiting" => ModerationStatus.Pending,
+            "default" => ModerationStatus.None,
+            "approved" or "approve" or "success" => ModerationStatus.Approved,
+            "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
+            _ => ModerationStatus.None
+        };
     }
 
     private void BuildPhotosGrid()

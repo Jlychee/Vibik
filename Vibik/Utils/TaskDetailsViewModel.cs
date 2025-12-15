@@ -1,14 +1,75 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Core.Domain;
 
 namespace Vibik.Utils;
 
-public sealed class TaskDetailsViewModel
+public sealed class TaskDetailsViewModel : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     public string TaskName { get; set; }
     public string Description { get; set; }
     public ImageSource ExampleCollage { get; set; }
-
     public string PhotoCountLabel { get; set; }
+
+    private bool isSending;
+    public bool IsSending
+    {
+        get => isSending;
+        set
+        {
+            if (isSending == value) return;
+            isSending = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanSend));
+            OnPropertyChanged(nameof(SendButtonText));
+        }
+    }
+
+    private ModerationStatus moderationStatus;
+    public ModerationStatus ModerationStatus
+    {
+        get => moderationStatus;
+        set
+        {
+            if (moderationStatus == value) return;
+            moderationStatus = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanSend));
+            OnPropertyChanged(nameof(SendButtonText));
+        }
+    }
+
+    private bool isCompletedView;
+    public bool IsCompletedView
+    {
+        get => isCompletedView;
+        set
+        {
+            if (isCompletedView == value) return;
+            isCompletedView = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanSend));
+            OnPropertyChanged(nameof(SendButtonText));
+        }
+    }
+
+    public bool CanSend =>
+        !IsSending &&
+        !IsCompletedView &&
+        ModerationStatus is not ModerationStatus.Pending
+                         and not ModerationStatus.Approved
+                         and not ModerationStatus.Rejected;
+
+    public string SendButtonText =>
+        IsSending ? "Отправляем…" :
+        ModerationStatus == ModerationStatus.Pending ? "На модерации" :
+        ModerationStatus == ModerationStatus.Approved ? "Одобрено" :
+        ModerationStatus == ModerationStatus.Rejected ? "Отклонено" :
+        "Отправить";
 
     public TaskDetailsViewModel(TaskModel taskModel)
     {
@@ -26,12 +87,14 @@ public sealed class TaskDetailsViewModel
         }
         else
         {
-            var word = ChoosePhotoWord(required);
-            PhotoCountLabel = $"Нужно {required} {word}";
+            var (word1, word2) = ChoosePhotoWord(required);
+            PhotoCountLabel = $"{word1} {required} {word2}";
         }
+
+        ModerationStatus = taskModel.ModerationStatus;
     }
-    
-    private static string ChoosePhotoWord(int n)
+
+    private static (string, string) ChoosePhotoWord(int n)
     {
         var nAbs = Math.Abs(n);
         var lastTwo = nAbs % 100;
@@ -39,10 +102,9 @@ public sealed class TaskDetailsViewModel
 
         return last switch
         {
-            1 when lastTwo != 11 => "фотка",
-            >= 2 and <= 4 when lastTwo is < 12 or > 14 => "фотки",
-            _ => "фоток"
+            1 when lastTwo != 11 => ("Нужна", "фотка"),
+            >= 2 and <= 4 when lastTwo is < 12 or > 14 => ("Нужны", "фотки"),
+            _ => ("Нужно", "фоток")
         };
     }
-
 }
