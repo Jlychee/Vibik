@@ -1,5 +1,4 @@
 using Core.Interfaces;
-using Infrastructure.Services;
 using Vibik.Utils;
 
 namespace Vibik;
@@ -44,18 +43,20 @@ public partial class RegistrationPage
         try
         {
             await AppLogger.Info($"Регистрация нового пользователя: '{username}'");
-            var login = await userApi.RegisterAsync(username, displayName, password);
-            await AppLogger.Info($"есть ли логин: '{login}'");
+            var registerResult = await userApi.RegisterAsync(username, displayName, password); 
 
-            if (login is null)
+            if (registerResult is false)
             {
                 ShowError("Не удалось создать аккаунт.");
                 return;
             }
-            Preferences.Set("current_user", login.Username);
-            Preferences.Set("display_name", login.DisplayName);
+            
+            Preferences.Set("login_prefill_username_once", username);
+            Preferences.Set("login_prefill_password_once", password);
 
-            Application.Current!.MainPage = new AppShell();
+            await DisplayAlert("Успешно", "Вы успешно зарегистрированы. Теперь нужно войти в аккаунт.", "ОК");
+
+            await Navigation.PopAsync();
         }
         catch (Exception ex)
         {

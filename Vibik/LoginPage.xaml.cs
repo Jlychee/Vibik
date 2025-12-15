@@ -16,11 +16,42 @@ public partial class LoginPage
         NavigationPage.SetHasNavigationBar(this, false);
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        var uOnce = Preferences.Get("login_prefill_username_once", string.Empty);
+        var pOnce = Preferences.Get("login_prefill_password_once", string.Empty);
+
+        if (!string.IsNullOrWhiteSpace(uOnce))
+        {
+            UsernameEntry.Text = uOnce;
+            Preferences.Remove("login_prefill_username_once");
+        }
+        else
+        {
+            UsernameEntry.Text = string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(pOnce))
+        {
+            PasswordEntry.Text = pOnce;
+            Preferences.Remove("login_prefill_password_once");
+        }
+        else
+        {
+            PasswordEntry.Text = string.Empty;
+        }
+
+        ErrorLabel.IsVisible = false;
+    }
+
     private async void OnLoginClicked(object sender, EventArgs e)
     {
         ErrorLabel.IsVisible = false;
+
         var username = UsernameEntry.Text?.Trim() ?? string.Empty;
-        var password = PasswordEntry.Text;
+        var password = PasswordEntry.Text ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
@@ -36,15 +67,15 @@ public partial class LoginPage
 
             if (tokens == null)
             {
-                await AppLogger.Warn($"Неудачный логин: пользователь '{username}' не найден (заглушка).");
+                await AppLogger.Warn($"Неудачный логин: '{username}'");
                 ShowError("Не удалось войти. Проверьте данные.");
                 return;
             }
 
             await authService.SetTokensAsync(tokens.AccessToken, tokens.RefreshToken);
             Preferences.Set("current_user", username);
-            await AppLogger.Info($"Успешный логин: '{username}'");
 
+            await AppLogger.Info($"Успешный логин: '{username}'");
             Application.Current!.MainPage = new AppShell();
         }
         catch (Exception ex)

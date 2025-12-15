@@ -35,17 +35,14 @@ public class UserApi : IUserApi
         return await response.Content.ReadFromJsonAsync<LoginUserResponse>(cancellationToken: ct);
     }
 
-    public async Task<User?> RegisterAsync(string username, string displayName, string password,
+    public async Task<bool> RegisterAsync(string username, string displayName, string password,
         CancellationToken ct = default)
     {
-        if (useStub) return StubUser(username, displayName);
-
         var response = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserRegister,
-            new RegisterRequest(username, password, displayName),
+            new RegisterRequest(username, displayName, password),
             ct);
-        if (!response.IsSuccessStatusCode) return null;
-        return await response.Content.ReadFromJsonAsync<User>(cancellationToken: ct);
+        return response.IsSuccessStatusCode;
     }
 
     private static User StubUser(string username, string? displayName = null)
