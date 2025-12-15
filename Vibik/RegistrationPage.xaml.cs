@@ -44,7 +44,7 @@ public partial class RegistrationPage
         try
         {
             await AppLogger.Info($"Регистрация нового пользователя: '{username}'");
-            var login = await userApi.RegisterAsync(username, password, displayName);
+            var login = await userApi.RegisterAsync(username, displayName, password);
             await AppLogger.Info($"есть ли логин: '{login}'");
 
             if (login is null)

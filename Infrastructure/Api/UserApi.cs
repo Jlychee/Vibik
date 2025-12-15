@@ -35,7 +35,7 @@ public class UserApi : IUserApi
         return await response.Content.ReadFromJsonAsync<LoginUserResponse>(cancellationToken: ct);
     }
 
-    public async Task<User?> RegisterAsync(string username, string password, string displayName,
+    public async Task<User?> RegisterAsync(string username, string displayName, string password,
         CancellationToken ct = default)
     {
         if (useStub) return StubUser(username, displayName);
