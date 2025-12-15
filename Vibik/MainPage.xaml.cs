@@ -649,24 +649,38 @@ public partial class MainPage
             try
             {
                 var candidate = await taskApi.SwapTaskAsync(current.UserTaskId.ToString());
+
+                if (candidate is null)
+                {
+                    await AppAlerts.NoNewTasks();
+                    return;
+                }
+
                 card.Item = candidate;
-                card.Title = candidate.Name;
+                card.Title = candidate.Name ?? "Задание";
                 card.DaysPassed = candidate.DaysPassed();
                 card.Cost = candidate.Reward;
                 card.SwapCost = candidate.Swap;
+
                 var enoughNow = Money >= candidate.Swap;
                 card.CoinsColor = enoughNow
                     ? Color.FromArgb("#2E7D32")
                     : Color.FromArgb("#C62828");
+
                 MarkTaskShouldBeChanged();
                 AppEventHub.RequestRefresh(AppRefreshReason.TaskSwapped);
             }
-            catch
+            catch (HttpRequestException ex)
             {
-                await AppAlerts.NoNewTasks();
+                await AppLogger.Warn($"SwapTask: HTTP ошибка: {ex.Message}");
+                await DisplayAlert("Ошибка сети", "Не удалось заменить задание. Проверь интернет и попробуй снова.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await AppLogger.Error("SwapTask: ошибка", ex);
+                await DisplayAlert("Ошибка", ex.Message, "OK");
             }
         });
-
         return card;
     }
 
@@ -731,4 +745,26 @@ public partial class MainPage
     {
         IsModerationBannerVisible = false;
     }
+    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+    {
+        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
+        Directory.CreateDirectory(dir);
+
+        var last = Directory.GetFiles(dir, "*.log")
+            .OrderByDescending(f => f)
+            .FirstOrDefault();
+
+        if (last is null)
+        {
+            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
+            return;
+        }
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Vibik log",
+            File = new ShareFile(last)
+        });
+    }
+
 }

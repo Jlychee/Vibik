@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Core;
 using Core.Domain;
@@ -65,11 +66,23 @@ public sealed class TaskApi: ITaskApi
     
     public async Task<TaskModel?> SwapTaskAsync(string taskId, CancellationToken ct = default)
     {
-        return await httpClient.GetFromJsonAsync<TaskModel>(
-            ApiRoutes.SwapTask(taskId),
-            ct);
-    }
+        var resp = await httpClient.PutAsync(ApiRoutes.SwapTask(taskId), content: null, ct);
 
+        if (resp.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.NotFound)
+            return null;
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            var body = await resp.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException($"ChangeTask failed: {(int)resp.StatusCode} {resp.ReasonPhrase}. Body: {body}");
+        }
+
+        if (resp.Content.Headers.ContentLength == 0)
+            return null;
+
+        return await resp.Content.ReadFromJsonAsync<TaskModel>(cancellationToken: ct);
+    }
+    
     public async Task<bool> SubmitAsync(string taskId, IEnumerable<string> photoPaths, CancellationToken ct = default)
     {
         if (useStub) return true;

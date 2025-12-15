@@ -183,6 +183,10 @@
                              WidthRequest="32"
                              Aspect="Fill"
                              Clicked="OnProfileClicked"/>
+                <Button Text="Забрать последние логи"
+                        IsVisible="True"
+                        Clicked="OnShareLatestLogClicked"></Button>
+
             </Grid>
         </Frame>
     </Grid>

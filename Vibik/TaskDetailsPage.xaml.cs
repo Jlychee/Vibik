@@ -2,6 +2,7 @@ using Core.Domain;
 using Core.Interfaces;
 using Vibik.Utils;
 using Task = System.Threading.Tasks.Task;
+using Microsoft.Maui.Storage;
 
 namespace Vibik;
 
@@ -107,17 +108,22 @@ public partial class TaskDetailsPage
 
         BindingContext = new TaskDetailsViewModel(taskModel);
     }
-
+    
     private async void OnSendClick(object? sender, EventArgs e)
     {
         var vm = BindingContext as TaskDetailsViewModel;
+
+        if (vm?.IsSending == true)
+            return;
 
         if (isCompletedView || taskModel.ModerationStatus == ModerationStatus.Pending)
         {
             await DisplayAlert("На модерации", "Это задание уже отправлено и сейчас проверяется.", "OK");
             return;
         }
-        
+
+        List<string> tempCompressedPaths = new();
+
         try
         {
             var serverRaw = await taskApi.GetModerationStatusAsync(taskModel.UserTaskId.ToString());
@@ -132,7 +138,7 @@ public partial class TaskDetailsPage
                 return;
             }
 
-            if (serverStatus is ModerationStatus.Approved)
+            if (serverStatus is ModerationStatus.Approved or ModerationStatus.Rejected)
             {
                 await DisplayAlert("Уже проверено", "Это задание уже прошло модерацию, повторно отправлять не нужно.", "OK");
                 return;
@@ -149,15 +155,11 @@ public partial class TaskDetailsPage
 
             var count = localPaths.Count;
 
-            await AppLogger.Info(
-                $"TaskDetailsPage.OnSendClick: required={required}, localPhotos={count}");
+            await AppLogger.Info($"TaskDetailsPage.OnSendClick: required={required}, localPhotos={count}");
 
             if (required > 0 && count < required)
             {
-                await DisplayAlert(
-                    "Недостаточно фото",
-                    $"Нужно минимум {required}. Сейчас: {count}.",
-                    "OK");
+                await DisplayAlert("Недостаточно фото", $"Нужно минимум {required}. Сейчас: {count}.", "OK");
                 return;
             }
 
@@ -166,28 +168,36 @@ public partial class TaskDetailsPage
                 await DisplayAlert("Нет фото", "Добавьте хотя бы одно фото", "OK");
                 return;
             }
+
             if (vm != null) vm.IsSending = true;
 
-            var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), localPaths);
+            tempCompressedPaths.Clear();
+
+            foreach (var src in localPaths)
+            {
+                var originalBytes = await File.ReadAllBytesAsync(src);
+                var jpegBytes = CompressionUtils.CompressToJpeg(originalBytes);
+
+                var tempPath = Path.Combine(FileSystem.CacheDirectory, $"vibik_{Guid.NewGuid():N}.jpg");
+                await File.WriteAllBytesAsync(tempPath, jpegBytes);
+
+                tempCompressedPaths.Add(tempPath);
+            }
+
+            var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), tempCompressedPaths);
             if (!ok)
             {
-                await DisplayAlert(
-                    "Ошибка",
-                    "Не удалось отправить задание. Проверьте сеть и попробуйте ещё раз.",
-                    "OK");
+                await DisplayAlert("Ошибка", "Не удалось отправить задание. Проверьте сеть и попробуйте ещё раз.", "OK");
                 return;
             }
 
             taskModel.ModerationStatus = ModerationStatus.Pending;
-            MainPage.MarkTaskShouldBeChanged();
+            if (vm != null) vm.ModerationStatus = ModerationStatus.Pending;
 
             MainPage.MarkTaskShouldBeChanged();
             AppEventHub.RequestRefresh(AppRefreshReason.TaskSent);
 
-            await DisplayAlert(
-                "Отправлено",
-                "Задание отправлено на модерацию. Мы сообщим, когда оно будет проверено.",
-                "OK");
+            await DisplayAlert("Отправлено", "Задание отправлено на модерацию. Мы сообщим, когда оно будет проверено.", "OK");
 
             BuildPhotosGrid();
             await Navigation.PopAsync();
@@ -195,10 +205,7 @@ public partial class TaskDetailsPage
         catch (HttpRequestException ex)
         {
             await AppLogger.Warn($"Сетевая ошибка при отправке задания: {ex.Message}");
-            await DisplayAlert(
-                "Ошибка сети",
-                "Не удалось связаться с сервером. Проверьте интернет и попробуйте ещё раз.",
-                "OK");
+            await DisplayAlert("Ошибка сети", "Не удалось связаться с сервером. Проверьте интернет и попробуйте ещё раз.", "OK");
         }
         catch (Exception ex)
         {
@@ -207,9 +214,15 @@ public partial class TaskDetailsPage
         }
         finally
         {
+            foreach (var p in tempCompressedPaths)
+            {
+                try { File.Delete(p); } catch { }
+            }
+
             if (vm != null) vm.IsSending = false;
         }
     }
+    
     private static ModerationStatus MapModeration(string? statusString)
     {
         var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
