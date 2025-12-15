@@ -46,12 +46,12 @@
                                 Clicked="OnAddManyPhotosClicked"
                                 Margin="0,8,0,0" />
 
-                            <!-- пример -->
-                            <Label Text="Пример" FontSize="32" TextColor="Black"
-                                   HorizontalTextAlignment="Center" Margin="15" Padding="0"/>
-                            <Image Source="{Binding ExampleCollage, TargetNullValue=example_collage.png}" 
-                                   Aspect="AspectFit" Margin="43"/>
-            
+                            <!-- ~1~ пример @1@ -->
+                            <!-- <Label Text="Пример" FontSize="32" TextColor="Black" -->
+                            <!--        HorizontalTextAlignment="Center" Margin="15" Padding="0"/> -->
+                            <!-- <Image Source="{Binding ExampleCollage, TargetNullValue=example_collage.png}"  -->
+                            <!--        Aspect="AspectFit" Margin="43"/> -->
+                            <!-- -->
                             <!-- кнопка сдать задание -->   
                             <Button
                                 x:Name="SendButton"

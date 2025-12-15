@@ -137,7 +137,7 @@ public partial class TaskDetailsPage
                 return;
             }
 
-            if (serverStatus is ModerationStatus.Approved or ModerationStatus.Rejected)
+            if (serverStatus is ModerationStatus.Approved)
             {
                 await DisplayAlert("Уже проверено", "Это задание уже прошло модерацию, повторно отправлять не нужно.", "OK");
                 return;
@@ -495,6 +495,7 @@ public partial class TaskDetailsPage
 
             if (results == null)
                 return;
+
             var required = ExtendedInfo.PhotosRequired;
             var already = ExtendedInfo.UserPhotos?.Count ?? 0;
             var canAdd = required > 0 ? Math.Max(0, required - already) : int.MaxValue;

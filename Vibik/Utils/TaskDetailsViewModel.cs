@@ -61,14 +61,12 @@ public sealed class TaskDetailsViewModel : INotifyPropertyChanged
         !IsSending &&
         !IsCompletedView &&
         ModerationStatus is not ModerationStatus.Pending
-                         and not ModerationStatus.Approved
-                         and not ModerationStatus.Rejected;
+                         and not ModerationStatus.Approved;
 
     public string SendButtonText =>
         IsSending ? "Отправляем…" :
         ModerationStatus == ModerationStatus.Pending ? "На модерации" :
         ModerationStatus == ModerationStatus.Approved ? "Одобрено" :
-        ModerationStatus == ModerationStatus.Rejected ? "Отклонено" :
         "Отправить";
 
     public TaskDetailsViewModel(TaskModel taskModel)
