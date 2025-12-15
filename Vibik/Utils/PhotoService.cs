@@ -1,5 +1,7 @@
 namespace Vibik.Utils;
 
+using Microsoft.Maui.Devices;
+
 public static class PhotoService
 {
     public static async Task<FileResult?> PickOrCaptureAsync(Page page)
@@ -10,9 +12,11 @@ public static class PhotoService
 
         if (action == "Сделать фото")
         {
-            if (!await EnsurePermission<Permissions.Camera>())
+            var cameraGranted = await EnsurePermission<Permissions.Camera>();
+            var mediaGranted = await EnsureMediaAccessAsync();
+            if (!cameraGranted || !mediaGranted)
             {
-                await page.DisplayAlert("Нет доступа", "Разрешите доступ к камере.", "OK");
+                await page.DisplayAlert("Нет доступа", "Разрешите доступ к камере и фото/медиа.", "OK");
                 return null;
             }
             return await MediaPicker.Default.CapturePhotoAsync(new MediaPickerOptions
@@ -20,10 +24,35 @@ public static class PhotoService
                 Title = $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
             });
         }
-        _ = await EnsurePermission<Permissions.Photos>();
+        if (!await EnsureMediaAccessAsync())
+        {
+            await page.DisplayAlert("Нет доступа", "Разрешите доступ к фото/медиа.", "OK");
+            return null;
+        }
         return await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions { Title = "Выберите фото" });
     }
     
+    private static Task<bool> EnsureMediaAccessAsync()
+    {
+#if ANDROID
+        // Android 13+ uses the new media permission; below that we need classic storage read/write.
+        return DeviceInfo.Version.Major >= 13
+            ? EnsurePermission<Permissions.Photos>()
+            : EnsureLegacyStorageAsync();
+#else
+        return EnsurePermission<Permissions.Photos>();
+#endif
+    }
+
+#if ANDROID
+    private static async Task<bool> EnsureLegacyStorageAsync()
+    {
+        var readGranted = await EnsurePermission<Permissions.StorageRead>();
+        var writeGranted = await EnsurePermission<Permissions.StorageWrite>();
+        return readGranted && writeGranted;
+    }
+#endif
+
 
     private static async Task<bool> EnsurePermission<T>() where T : Permissions.BasePermission, new()
     {
