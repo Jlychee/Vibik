@@ -23,10 +23,12 @@
                           HeightRequest="24"
                           VerticalOptions="Center" />
 
-                   <!-- Поле логина с таким же отступом, как у пароля -->
+                   <!-- Поле логина -->
                    <Entry Grid.Row="0"
                           Grid.Column="1"
                           x:Name="UsernameEntry"
+                          TextChanged="OnUsernameTextChanged"
+                          Keyboard="Email"
                           Placeholder="Логин"
                           FontSize="20"
                           MaxLength="50"

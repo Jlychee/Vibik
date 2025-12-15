@@ -66,6 +66,19 @@ public partial class RegistrationPage
         }
     }
     
+    private void OnUsernameTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry) return;
+
+        var s = entry.Text ?? string.Empty;
+        var lower = s.ToLowerInvariant();
+
+        if (s != lower)
+        {
+            entry.Text = lower;
+        }
+    }
+    
     private void ShowError(string message)
     {
         ErrorLabel.Text = message;
