@@ -61,6 +61,19 @@ public static class PhotoService
             .ToArray();
     }
     
+    public static async Task<string> SavePickedFileToCacheAsync(FileResult file)
+    {
+        var ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
+
+        var localPath = Path.Combine(FileSystem.CacheDirectory, $"picked_{Guid.NewGuid():N}{ext}");
+
+        await using var src = await file.OpenReadAsync();
+        await using var dst = File.Open(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await src.CopyToAsync(dst);
+
+        return localPath;
+    }
 
     private static string GetTaskDirectory(string taskKey) =>
         Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
