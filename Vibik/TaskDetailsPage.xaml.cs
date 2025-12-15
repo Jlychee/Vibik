@@ -2,7 +2,6 @@ using Core.Domain;
 using Core.Interfaces;
 using Vibik.Utils;
 using Task = System.Threading.Tasks.Task;
-using Microsoft.Maui.Storage;
 
 namespace Vibik;
 
@@ -107,7 +106,7 @@ public partial class TaskDetailsPage
             taskModel.ModerationStatus is ModerationStatus.Approved or ModerationStatus.Rejected;
 
         BindingContext = new TaskDetailsViewModel(taskModel);
-    }
+    } 
     
     private async void OnSendClick(object? sender, EventArgs e)
     {
@@ -173,16 +172,7 @@ public partial class TaskDetailsPage
 
             tempCompressedPaths.Clear();
 
-            foreach (var src in localPaths)
-            {
-                var originalBytes = await File.ReadAllBytesAsync(src);
-                var jpegBytes = CompressionUtils.CompressToJpeg(originalBytes);
-
-                var tempPath = Path.Combine(FileSystem.CacheDirectory, $"vibik_{Guid.NewGuid():N}.jpg");
-                await File.WriteAllBytesAsync(tempPath, jpegBytes);
-
-                tempCompressedPaths.Add(tempPath);
-            }
+            await CompressionUtils.JpegToPath(localPaths, tempCompressedPaths);
 
             var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), tempCompressedPaths);
             if (!ok)
@@ -222,7 +212,8 @@ public partial class TaskDetailsPage
             if (vm != null) vm.IsSending = false;
         }
     }
-    
+
+
     private static ModerationStatus MapModeration(string? statusString)
     {
         var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
@@ -443,10 +434,7 @@ public partial class TaskDetailsPage
         if (uri.IsFile)
             return uri.LocalPath;
 
-        if (!string.IsNullOrEmpty(uri.OriginalString))
-            return uri.OriginalString;
-
-        return uri.AbsolutePath;
+        return !string.IsNullOrEmpty(uri.OriginalString) ? uri.OriginalString : uri.AbsolutePath;
     }
 
     private static bool IsLocalPath(string urlOrPath)
@@ -495,4 +483,53 @@ public partial class TaskDetailsPage
         close.Clicked += (_, __) => Navigation.PopModalAsync();
         await Navigation.PushModalAsync(page, true);
     }
+    private async void OnAddManyPhotosClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var results = await FilePicker.Default.PickMultipleAsync(new PickOptions
+            {
+                PickerTitle = "Выберите фото",
+                FileTypes = FilePickerFileType.Images
+            });
+
+            if (results == null)
+                return;
+            var required = ExtendedInfo.PhotosRequired;
+            var already = ExtendedInfo.UserPhotos?.Count ?? 0;
+            var canAdd = required > 0 ? Math.Max(0, required - already) : int.MaxValue;
+
+            foreach (var file in results.Take(canAdd))
+            {
+                var localPath = await SavePickedFileToCacheAsync(file);
+
+                ExtendedInfo.UserPhotos.Add(new Uri(localPath));
+            }
+
+            BuildPhotosGrid();
+
+            if (required > 0 && results.Count() > canAdd)
+                await DisplayAlert("Лимит", $"Можно добавить ещё {canAdd} фото для этого задания.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await AppLogger.Error(ex.ToString());
+            await DisplayAlert("Ошибка", ex.Message, "OK");
+        }
+    }
+
+    private static async Task<string> SavePickedFileToCacheAsync(FileResult file)
+    {
+        var ext = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
+
+        var localPath = Path.Combine(FileSystem.CacheDirectory, $"picked_{Guid.NewGuid():N}{ext}");
+
+        await using var src = await file.OpenReadAsync();
+        await using var dst = File.Open(localPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await src.CopyToAsync(dst);
+
+        return localPath;
+    }
+
 }

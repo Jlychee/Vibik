@@ -37,6 +37,15 @@
                                       ColumnSpacing="24"
                                       RowSpacing="24"/>
                             </ScrollView>
+                            <Button
+                                Text="+ Добавить несколько"
+                                TextColor="{StaticResource MilkChocolate}"
+                                BorderColor="{StaticResource MilkChocolate}"
+                                BorderWidth="1"
+                                BackgroundColor="Transparent"
+                                Clicked="OnAddManyPhotosClicked"
+                                Margin="0,8,0,0" />
+
                             <!-- пример -->
                             <Label Text="Пример" FontSize="32" TextColor="Black"
                                    HorizontalTextAlignment="Center" Margin="15" Padding="0"/>

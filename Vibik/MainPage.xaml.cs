@@ -648,13 +648,18 @@ public partial class MainPage
 
             try
             {
-                var candidate = await taskApi.SwapTaskAsync(current.UserTaskId.ToString());
+                var oldTask = current;
+                var oldId = oldTask.UserTaskId;
 
+                var candidate = await taskApi.SwapTaskAsync(oldId.ToString());
                 if (candidate is null)
                 {
                     await AppAlerts.NoNewTasks();
                     return;
                 }
+
+                TaskPhotosCleaner.CleanupTaskPhotos(oldTask);
+                TaskPhotosCleaner.DeleteTaskFolder(oldId); 
 
                 card.Item = candidate;
                 card.Title = candidate.Name ?? "Задание";
