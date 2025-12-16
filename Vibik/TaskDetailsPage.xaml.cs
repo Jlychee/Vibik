@@ -172,7 +172,7 @@ public partial class TaskDetailsPage
 
             tempCompressedPaths.Clear();
 
-            await CompressionUtils.JpegToPath(localPaths, tempCompressedPaths);
+            tempCompressedPaths = await CompressionUtils.JpegToPaths(localPaths);
 
             var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), tempCompressedPaths);
             if (!ok)

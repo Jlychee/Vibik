@@ -81,4 +81,8 @@
       <Folder Include="Services\" />
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+      <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.1.1" />
+    </ItemGroup>
+
 </Project>
