@@ -1,3 +1,5 @@
+using Core.Domain;
+
 namespace Vibik.Utils;
 
 using Microsoft.Maui.Devices;
@@ -35,7 +37,6 @@ public static class PhotoService
     private static Task<bool> EnsureMediaAccessAsync()
     {
 #if ANDROID
-        // Android 13+ uses the new media permission; below that we need classic storage read/write.
         return DeviceInfo.Version.Major >= 13
             ? EnsurePermission<Permissions.Photos>()
             : EnsureLegacyStorageAsync();
@@ -80,16 +81,6 @@ public static class PhotoService
         return dst;
     }
     
-    public static IReadOnlyList<string> GetSavedPhotos(string taskKey)
-    {
-        var dir = GetTaskDirectory(taskKey);
-        if (!Directory.Exists(dir)) return Array.Empty<string>();
-
-        return Directory.GetFiles(dir)
-            .OrderBy(f => f)
-            .ToArray();
-    }
-    
     public static async Task<string> SavePickedFileToCacheAsync(FileResult file)
     {
         var ext = Path.GetExtension(file.FileName);
@@ -106,6 +97,63 @@ public static class PhotoService
 
     private static string GetTaskDirectory(string taskKey) =>
         Path.Combine(FileSystem.AppDataDirectory, "tasks", taskKey);
+    
+    public static void LoadLocalPhotos(TaskModel task, string taskKey)
+    {
+        var extendedInfo = task.ExtendedInfo;
+        var dir = GetTaskDirectory(taskKey);
+
+        var keep = new List<Uri>(extendedInfo.UserPhotos.Count);
+        var existingLocal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var uri in extendedInfo.UserPhotos)
+        {
+            var path = ImageSourceFinder.GetPathFromUri(uri);
+
+            if (string.IsNullOrWhiteSpace(path) || !ImageSourceFinder.IsLocalPath(path))
+            {
+                keep.Add(uri);
+                continue;
+            }
+
+            if (File.Exists(path))
+            {
+                keep.Add(uri);
+                existingLocal.Add(path);
+            }
+        }
+
+        extendedInfo.UserPhotos.Clear();
+        extendedInfo.UserPhotos.AddRange(keep);
+
+        if (!Directory.Exists(dir))
+            return;
+
+        foreach (var path in Directory.EnumerateFiles(dir).OrderBy(x => x))
+        {
+            if (!File.Exists(path)) continue;
+
+            if (existingLocal.Add(path))
+                extendedInfo.UserPhotos.Add(new Uri(path));
+        }
+    }
+    
+    public static void DeleteAllTaskLocalPhotosExcept(string taskKey)
+    {
+        var dir = GetTaskDirectory(taskKey);
+        if (!Directory.Exists(dir)) return;
+        
+        foreach (var file in Directory.EnumerateFiles(dir))
+        {
+            try
+            {
+                var full = Path.GetFullPath(file); 
+                File.Delete(full);
+            }
+            catch { }
+        }
+    }
+
 }
 
     

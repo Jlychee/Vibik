@@ -2,6 +2,8 @@ namespace Vibik.Utils;
 
 public static class Alerts
 {
+    private const string OkMessage = "ОК";
+    private const string ErrorMessage = "Ошибка";
     private static Page? CurrentPage =>
         Application.Current?.MainPage switch
         {
@@ -43,10 +45,10 @@ public static class Alerts
     }
 
     public static Task Info(string title, string message) =>
-        ShowAsync(title, message, "OK");
+        ShowAsync(title, message, OkMessage);
 
-    public static Task Error(string title, string message) =>
-        ShowAsync(title, message, "OK");
+    public static Task Error(string message) =>
+        ShowAsync(ErrorMessage, message, OkMessage);
     
     public static Task<bool> Confirm(
         string title, 

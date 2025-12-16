@@ -1,7 +1,6 @@
 using Core.Domain;
 using Core.Interfaces;
 using Vibik.Utils;
-using Task = System.Threading.Tasks.Task;
 
 namespace Vibik;
 
@@ -14,16 +13,20 @@ public partial class TaskDetailsPage
     private readonly TaskModel taskModel;
     private readonly ITaskApi taskApi;
 
-    private bool isCompletedView;
+    private bool isTaskCompleted;
+    private string TaskKey =>
+        taskModel.UserTaskId != 0
+            ? taskModel.UserTaskId.ToString()
+            : taskModel.TaskId;
+
 
     private TaskModelExtendedInfo ExtendedInfo
     {
         get
         {
-            if (taskModel.ExtendedInfo == null)
-                taskModel.ExtendedInfo = new TaskModelExtendedInfo();
+            taskModel.ExtendedInfo ??= new TaskModelExtendedInfo();
 
-            taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
+            taskModel.ExtendedInfo.UserPhotos ??= [];
             return taskModel.ExtendedInfo;
         }
     }
@@ -35,18 +38,16 @@ public partial class TaskDetailsPage
         this.taskModel = taskModel ?? throw new ArgumentNullException(nameof(taskModel));
         this.taskApi = taskApi ?? throw new ArgumentNullException(nameof(taskApi));
 
-        isCompletedView =
+        isTaskCompleted =
             taskModel.Completed ||
-            taskModel.ModerationStatus is ModerationStatus.Approved or ModerationStatus.Rejected;
+            taskModel.ModerationStatus is ModerationStatus.Approved;
 
         _ = ExtendedInfo;
 
         BindingContext = new TaskDetailsViewModel(this.taskModel);
-        if (BindingContext is TaskDetailsViewModel vm)
-        {
-            vm.IsCompletedView = isCompletedView;
-            vm.ModerationStatus = taskModel.ModerationStatus;
-        }
+        if (BindingContext is not TaskDetailsViewModel vm) return;
+        vm.IsCompletedView = isTaskCompleted;
+        vm.ModerationStatus = taskModel.ModerationStatus;
 
     }
 
@@ -55,43 +56,26 @@ public partial class TaskDetailsPage
         base.OnAppearing();
 
         await EnsureExtendedInfoLoadedAsync();
-        if (!isCompletedView)
+        if (!isTaskCompleted)
         {
-            LoadSavedPhotos();
+            PhotoService.LoadLocalPhotos(taskModel, TaskKey);
         }
-        BuildPhotosGrid();
+        
+        ImageSourceFinder.EnsureOnlyLocalPhotosForEditableStatuses(taskModel);
+        _ = BuildPhotosGrid().ContinueWith(task =>
+        {
+            var ex = task.Exception?.GetBaseException();
+            _ = AppLogger.Error($"Ошибка при построении PhotosGrid: {ex}");
+        }, TaskContinuationOptions.OnlyOnFaulted);
+
     }
 
     private async Task EnsureExtendedInfoLoadedAsync()
     {
+        TaskModel? fullInfoAboutTask = null;
         try
         {
-            var full = await taskApi.GetTaskAsync(taskModel.UserTaskId.ToString());
-
-            if (full != null)
-            {
-                taskModel.Name             = full.Name;
-                taskModel.Reward           = full.Reward;
-                taskModel.Completed        = full.Completed;
-                taskModel.ModerationStatus = full.ModerationStatus;
-                taskModel.TaskId           = full.TaskId;
-                
-                if (full.ExtendedInfo != null)
-                {
-                    taskModel.ExtendedInfo = full.ExtendedInfo;
-                    taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
-                }
-
-                await AppLogger.Info(
-                    $"EnsureExtendedInfoLoadedAsync: userTaskId={taskModel.UserTaskId}, " +
-                    $"desc='{taskModel.ExtendedInfo?.Description}', " +
-                    $"photos={taskModel.ExtendedInfo?.UserPhotos?.Count ?? 0}");
-            }
-            else
-            {
-                await AppLogger.Warn(
-                    $"EnsureExtendedInfoLoadedAsync: сервер вернул null для userTaskId={taskModel.UserTaskId}");
-            }
+            fullInfoAboutTask = await taskApi.GetTaskAsync(taskModel.UserTaskId.ToString());
         }
         catch (Exception ex)
         {
@@ -99,135 +83,136 @@ public partial class TaskDetailsPage
                 $"EnsureExtendedInfoLoadedAsync: не удалось получить данные с бэка для userTaskId={taskModel.UserTaskId}: {ex.Message}");
         }
 
-        _ = ExtendedInfo;
+        if (fullInfoAboutTask is null)
+        {
+            taskModel.ExtendedInfo ??= new TaskModelExtendedInfo();
+            taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
 
-        isCompletedView =
-            taskModel.Completed ||
-            taskModel.ModerationStatus is ModerationStatus.Approved or ModerationStatus.Rejected;
+            isTaskCompleted = taskModel.Completed || taskModel.ModerationStatus == ModerationStatus.Approved;
+            BindingContext = new TaskDetailsViewModel(taskModel);
+            return;
+        }
+        
+        taskModel.Name = fullInfoAboutTask.Name;
+        taskModel.Reward = fullInfoAboutTask.Reward;
+        taskModel.Completed = fullInfoAboutTask.Completed;
+        taskModel.ModerationStatus = fullInfoAboutTask.ModerationStatus;
+        taskModel.TaskId = fullInfoAboutTask.TaskId;
+
+        taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
+        if (fullInfoAboutTask.ExtendedInfo != null)
+        {
+            taskModel.ExtendedInfo.Description     = fullInfoAboutTask.ExtendedInfo.Description;
+            taskModel.ExtendedInfo.PhotosRequired  = fullInfoAboutTask.ExtendedInfo.PhotosRequired;
+
+            if (taskModel.Completed || taskModel.ModerationStatus == ModerationStatus.Approved)
+                taskModel.ExtendedInfo.UserPhotos = fullInfoAboutTask.ExtendedInfo.UserPhotos ?? new List<Uri>();
+        }
+
+        await AppLogger.Info(
+            $"EnsureExtendedInfoLoadedAsync: userTaskId={taskModel.UserTaskId}, " +
+            $"status={taskModel.ModerationStatus}, completed={taskModel.Completed}, " +
+            $"desc='{taskModel.ExtendedInfo.Description}', photos={taskModel.ExtendedInfo.UserPhotos.Count}");
+
+        isTaskCompleted = taskModel.Completed || taskModel.ModerationStatus == ModerationStatus.Approved;
 
         BindingContext = new TaskDetailsViewModel(taskModel);
+        if (BindingContext is TaskDetailsViewModel vm)
+        {
+            vm.IsCompletedView = isTaskCompleted;
+            vm.ModerationStatus = taskModel.ModerationStatus;
+        }
     } 
     
     private async void OnSendClick(object? sender, EventArgs e)
     {
         var vm = BindingContext as TaskDetailsViewModel;
-
         if (vm?.IsSending == true)
             return;
-
-        if (isCompletedView || taskModel.ModerationStatus == ModerationStatus.Pending)
-        {
-            await DisplayAlert("На модерации", "Это задание уже отправлено и сейчас проверяется.", "OK");
-            return;
-        }
-
         List<string> tempCompressedPaths = new();
 
         try
         {
-            var serverRaw = await taskApi.GetModerationStatusAsync(taskModel.UserTaskId.ToString());
-            var serverStatus = MapModeration(serverRaw);
-
-            taskModel.ModerationStatus = serverStatus;
-            if (vm != null) vm.ModerationStatus = serverStatus;
-
-            if (serverStatus == ModerationStatus.Pending)
+            var taskStatus = await RefreshServerStatusAsync(vm);
+            switch (taskStatus)
             {
-                await DisplayAlert("На модерации", "Это задание уже отправлено и сейчас проверяется.", "OK");
-                return;
-            }
-
-            if (serverStatus is ModerationStatus.Approved)
-            {
-                await DisplayAlert("Уже проверено", "Это задание уже прошло модерацию, повторно отправлять не нужно.", "OK");
-                return;
+                case ModerationStatus.Pending:
+                    await AppAlerts.TaskOnModeration();
+                    return;
+                case ModerationStatus.Approved:
+                    await AppAlerts.TaskCompleted();
+                    return;
             }
 
             var required = ExtendedInfo.PhotosRequired;
-
-            var localPaths = ExtendedInfo.UserPhotos
-                .Select(GetPathFromUri)
-                .Where(p => !string.IsNullOrWhiteSpace(p))
-                .Where(IsLocalPath)
-                .Where(File.Exists)
-                .ToList();
-
+            var localPaths = ImageSourceFinder.GetUserPhotosPath(taskModel, needLocal:true, needExisting:true);
             var count = localPaths.Count;
-
-            await AppLogger.Info($"TaskDetailsPage.OnSendClick: required={required}, localPhotos={count}");
-
-            if (required > 0 && count < required)
+            
+            if (count < required && required > 0)
             {
-                await DisplayAlert("Недостаточно фото", $"Нужно минимум {required}. Сейчас: {count}.", "OK");
+                await AppAlerts.NotEnoughPhotos(required, count);
                 return;
             }
 
             if (count == 0)
             {
-                await DisplayAlert("Нет фото", "Добавьте хотя бы одно фото", "OK");
+                await AppAlerts.NoPhotos();
                 return;
             }
 
             if (vm != null) vm.IsSending = true;
-
-            tempCompressedPaths.Clear();
-
+            
             tempCompressedPaths = await CompressionUtils.JpegToPaths(localPaths);
 
             var ok = await taskApi.SubmitAsync(taskModel.UserTaskId.ToString(), tempCompressedPaths);
             if (!ok)
             {
-                await DisplayAlert("Ошибка", "Не удалось отправить задание. Проверьте сеть и попробуйте ещё раз.", "OK");
+                await AppAlerts.TaskSendFailed();
                 return;
             }
+            await AppAlerts.TaskSendSuccess();
 
-            taskModel.ModerationStatus = ModerationStatus.Pending;
-            if (vm != null) vm.ModerationStatus = ModerationStatus.Pending;
-
-            MainPage.MarkTaskShouldBeChanged();
+            UpdateLocalStatus(ModerationStatus.Pending, vm);
             AppEventHub.RequestRefresh(AppRefreshReason.TaskSent);
-
-            await DisplayAlert("Отправлено", "Задание отправлено на модерацию. Мы сообщим, когда оно будет проверено.", "OK");
-
-            BuildPhotosGrid();
+            
+            _ = BuildPhotosGrid();
             await Navigation.PopAsync();
         }
         catch (HttpRequestException ex)
         {
             await AppLogger.Warn($"Сетевая ошибка при отправке задания: {ex.Message}");
-            await DisplayAlert("Ошибка сети", "Не удалось связаться с сервером. Проверьте интернет и попробуйте ещё раз.", "OK");
+            await AppAlerts.TaskSendHttpError();
         }
         catch (Exception ex)
         {
             await AppLogger.Error(ex.ToString());
-            await DisplayAlert("Ошибка", ex.Message, "OK");
+            await AppAlerts.UniversalError(ex.Message);
         }
         finally
         {
-            foreach (var p in tempCompressedPaths)
-            {
-                try { File.Delete(p); } catch { }
-            }
-
+            ImageSourceFinder.CleanupTempFiles(tempCompressedPaths);
             if (vm != null) vm.IsSending = false;
         }
     }
-
-
-    private static ModerationStatus MapModeration(string? statusString)
+    
+    
+    private async Task<ModerationStatus> RefreshServerStatusAsync(TaskDetailsViewModel? vm)
     {
-        var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
-        return normalized switch
-        {
-            "waiting" => ModerationStatus.Pending,
-            "default" => ModerationStatus.None,
-            "approved" or "approve" or "success" => ModerationStatus.Approved,
-            "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
-            _ => ModerationStatus.None
-        };
+        var serverRaw = await taskApi.GetModerationStatusAsync(taskModel.UserTaskId.ToString());
+        var serverStatus = ModerationStatusService.MapModeration(serverRaw);
+
+        UpdateLocalStatus(serverStatus, vm);
+        return serverStatus;
+    }
+    
+    private void UpdateLocalStatus(ModerationStatus status, TaskDetailsViewModel? vm)
+    {
+        taskModel.ModerationStatus = status;
+        if (vm != null) vm.ModerationStatus = status;
     }
 
-    private void BuildPhotosGrid()
+
+    private async Task BuildPhotosGrid()
     {
         PhotoShotsGrid.Children.Clear();
         PhotoShotsGrid.ColumnDefinitions.Clear();
@@ -244,93 +229,73 @@ public partial class TaskDetailsPage
         PhotoShotsGrid.HorizontalOptions = LayoutOptions.Center;
         PhotoShotsGrid.WidthRequest = Columns * TileSize + (Columns - 1) * CellGap;
 
-        var paths = ExtendedInfo.UserPhotos
-            .Select(GetPathFromUri)
-            .Where(u => !string.IsNullOrWhiteSpace(u))
-            .ToList();
+        var paths = ImageSourceFinder.GetUserPhotosPath(taskModel);
 
         var required = ExtendedInfo.PhotosRequired;
         var totalSlots = required > 0 ? required : Math.Max(paths.Count + 1, 1);
-
+        if (required == -1 && taskModel.ModerationStatus != ModerationStatus.Approved && taskModel.ModerationStatus != ModerationStatus.Pending)
+            totalSlots = taskModel.ExtendedInfo!.UserPhotos.Count + 1;
+        if (taskModel.ModerationStatus is ModerationStatus.Approved or ModerationStatus.Pending)
+            totalSlots = taskModel.ExtendedInfo!.UserPhotos.Count;
         var rows = (int)Math.Ceiling(totalSlots / (double)Columns);
         for (var r = 0; r < rows; r++)
             PhotoShotsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
-        var i = 0;
-
+        var j = 0;
         foreach (var path in paths.Take(totalSlots))
-            AddPhotoTile(path, i++);
+            AddPhotoTile(path, j++);
 
-        if (isCompletedView) return;
-        for (; i < totalSlots; i++)
-            AddAddTile(i);
+        if (isTaskCompleted) return;
+        for (; j < totalSlots; j++)
+            AddAddTile(j);
     }
+    
 
-    private void LoadSavedPhotos()
+    private void AddTileAt(int index, Resources.Components.PhotoTile tile)
     {
-        var saved = PhotoService.GetSavedPhotos(TaskKey);
-        ExtendedInfo.UserPhotos.RemoveAll(p =>
-        {
-            var local = GetPathFromUri(p);
-            if (string.IsNullOrWhiteSpace(local)) return false;
-            if (!IsLocalPath(local)) return false;
-            return !File.Exists(local);
-        });
+        var rows = index / Columns;
+        var columns = index % Columns;
 
-        var existing = ExtendedInfo.UserPhotos
-            .Select(GetPathFromUri)
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var path in saved.Where(File.Exists))
-        {
-            if (existing.Add(path))
-                ExtendedInfo.UserPhotos.Add(new Uri(path));
-        }
+        Grid.SetRow(tile, rows);
+        Grid.SetColumn(tile, columns);
+        PhotoShotsGrid.Children.Add(tile);
     }
 
     private void AddPhotoTile(string path, int index)
     {
-        var r = index / Columns;
-        var c = index % Columns;
-
         var tile = new Resources.Components.PhotoTile
         {
             PathOrUrl = path,
             TileSize = TileSize,
             IsAddTile = false
         };
+
         tile.PhotoTapped += async (_, p) =>
         {
             if (!string.IsNullOrWhiteSpace(p))
                 await OnPhotoTappedCore(p);
         };
 
-        Grid.SetRow(tile, r);
-        Grid.SetColumn(tile, c);
-        PhotoShotsGrid.Children.Add(tile);
+        AddTileAt(index, tile);
     }
 
     private void AddAddTile(int index)
     {
-        var r = index / Columns;
-        var c = index % Columns;
-
         var add = new Resources.Components.PhotoTile
         {
             IsAddTile = true,
             TileSize = TileSize
         };
+
         add.AddTapped += OnAddPhotoTapped;
 
-        Grid.SetRow(add, r);
-        Grid.SetColumn(add, c);
-        PhotoShotsGrid.Children.Add(add);
+        AddTileAt(index, add);
     }
+
 
     private async Task OnPhotoTappedCore(string path)
     {
-        var actions = isCompletedView
+        var actions = isTaskCompleted || taskModel.ModerationStatus is ModerationStatus.Pending
             ? new[] { "Просмотреть" }
             : new[] { "Просмотреть", "Заменить", "Удалить" };
 
@@ -343,56 +308,62 @@ public partial class TaskDetailsPage
                 await ShowPreviewAsync(path);
                 break;
 
-            case "Заменить" when !isCompletedView:
+            case "Заменить" when !isTaskCompleted || taskModel.ModerationStatus is not ModerationStatus.Pending:
             {
-                var newFile = await PhotoService.PickOrCaptureAsync(this);
-                if (newFile == null) return;
-
-                var newPath = await PhotoService.SaveFileResultAsync(newFile, TaskKey);
-                var idx = ExtendedInfo.UserPhotos.FindIndex(p => GetPathFromUri(p) == path);
-                if (idx >= 0)
-                {
-                    TryDeleteLocal(GetPathFromUri(ExtendedInfo.UserPhotos[idx]));
-
-                    ExtendedInfo.UserPhotos[idx] = new Uri(newPath);
-                    BuildPhotosGrid();
-                }
+                await ReplacePhotoAsync(path);
                 break;
             }
 
-            case "Удалить" when !isCompletedView:
+            case "Удалить" when !isTaskCompleted || taskModel.ModerationStatus is not ModerationStatus.Pending:
             {
-                var ok = await DisplayAlert(
-                    "Удалить фото?",
-                    "Это действие необратимо.",
-                    "Удалить",
-                    "Отмена");
-                if (!ok) return;
-
-                var removed = ExtendedInfo.UserPhotos.RemoveAll(p => GetPathFromUri(p) == path) > 0;
-                if (removed) TryDeleteLocal(path);
-                BuildPhotosGrid();
-                break;
+                await DeletePhotoAsync(path);
+                return;
             }
+        }
+    }
+
+    private async Task DeletePhotoAsync(string path)
+    {
+        var ok = await AppAlerts.DeletePhoto();
+        if (!ok) return;
+
+        var removed = ExtendedInfo.UserPhotos.RemoveAll(p => ImageSourceFinder.GetPathFromUri(p) == path) > 0;
+        if (removed) ImageSourceFinder.TryDeleteLocal(path);
+        _ = BuildPhotosGrid();
+    }
+
+    private async Task ReplacePhotoAsync(string path)
+    {
+        var oldPathIndex = ExtendedInfo.UserPhotos.FindIndex(p => ImageSourceFinder.GetPathFromUri(p) == path);
+        var oldPhoto = ExtendedInfo.UserPhotos[oldPathIndex];
+        var newFile = await PhotoService.PickOrCaptureAsync(this);
+        if (newFile == null) return;
+                    
+        var newPath = await PhotoService.SaveFileResultAsync(newFile, TaskKey);
+        if (oldPathIndex >= 0)
+        {
+            ImageSourceFinder.TryDeleteLocal(ImageSourceFinder.GetPathFromUri(oldPhoto));
+
+            ExtendedInfo.UserPhotos[oldPathIndex] = new Uri(newPath);
+            _ = BuildPhotosGrid();
         }
     }
 
     private async void OnAddPhotoTapped(object? sender, EventArgs e)
     {
-        if (isCompletedView)
+        if (isTaskCompleted || taskModel.ModerationStatus is ModerationStatus.Pending)
         {
-            await DisplayAlert("Нельзя добавить фото",
-                "Задание уже завершено. Добавлять новые фото нельзя.",
-                "OK");
+            await AppAlerts.CanNotAddPhoto();
             return;
         }
 
         try
         {
             var current = ExtendedInfo.UserPhotos?.Count ?? 0;
-            if (ExtendedInfo.PhotosRequired > 0 && current >= ExtendedInfo.PhotosRequired)
+            var required = ExtendedInfo.PhotosRequired;
+            if ( required> 0 && current >= required)
             {
-                await DisplayAlert("Лимит", "Достигнуто максимальное количество фото.", "OK");
+                await AppAlerts.PhotoLimit();
                 return;
             }
 
@@ -402,58 +373,19 @@ public partial class TaskDetailsPage
             var savedPath = await PhotoService.SaveFileResultAsync(file, TaskKey);
 
             ExtendedInfo.UserPhotos!.Add(new Uri(savedPath));
-            BuildPhotosGrid();
+            _ = BuildPhotosGrid();
         }
         catch (FeatureNotSupportedException)
         {
-            await DisplayAlert("Не поддерживается", "Медиа-пикер недоступен на этом устройстве.", "OK");
+            await AppAlerts.DoesNotSupport();
         }
         catch (PermissionException)
         {
-            await DisplayAlert("Нет доступа", "Разрешите необходимые разрешения в настройках.", "OK");
+            await AppAlerts.NoPermission();
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Ошибка", ex.Message, "OK");
-        }
-    }
-
-    private string TaskKey =>
-        taskModel.UserTaskId != 0
-            ? taskModel.UserTaskId.ToString()
-            : taskModel.TaskId;
-    
-    private static string GetPathFromUri(Uri uri)
-    {
-        if (uri == null)
-            return string.Empty;
-
-        if (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
-            return uri.OriginalString;
-
-        if (uri.IsFile)
-            return uri.LocalPath;
-
-        return !string.IsNullOrEmpty(uri.OriginalString) ? uri.OriginalString : uri.AbsolutePath;
-    }
-
-    private static bool IsLocalPath(string urlOrPath)
-    {
-        if (Uri.TryCreate(urlOrPath, UriKind.Absolute, out var uri))
-            return !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
-        return true;
-    }
-
-    private static void TryDeleteLocal(string path)
-    {
-        try
-        {
-            if (IsLocalPath(path) && File.Exists(path))
-                File.Delete(path);
-        }
-        catch
-        {
-            // ignored
+            await AppAlerts.UniversalError(ex.Message);
         }
     }
 
@@ -480,42 +412,56 @@ public partial class TaskDetailsPage
         grid.Children.Add(img);
 
         var page = new ContentPage { BackgroundColor = Colors.Black, Content = grid };
-        close.Clicked += (_, __) => Navigation.PopModalAsync();
+        close.Clicked += (_, _) => Navigation.PopModalAsync();
         await Navigation.PushModalAsync(page, true);
     }
+    
     private async void OnAddManyPhotosClicked(object? sender, EventArgs e)
     {
+        if (isTaskCompleted || taskModel.ModerationStatus == ModerationStatus.Pending)
+        {
+            await AppAlerts.CanNotAddPhoto();
+            return;
+        }
+
         try
         {
+            var required = ExtendedInfo.PhotosRequired;
+            var already = ExtendedInfo.UserPhotos?.Count ?? 0;
+
+            var remaining = required > 0 ? Math.Max(0, required - already) : int.MaxValue;
+            if (remaining == 0)
+            {
+                await AppAlerts.PhotoLimit();
+                return;
+            }
+
             var results = await FilePicker.Default.PickMultipleAsync(new PickOptions
             {
                 PickerTitle = "Выберите фото",
                 FileTypes = FilePickerFileType.Images
             });
 
-            if (results == null)
+            var picked = results.ToList();
+            if (picked == null || picked.Count == 0)
                 return;
 
-            var required = ExtendedInfo.PhotosRequired;
-            var already = ExtendedInfo.UserPhotos?.Count ?? 0;
-            var canAdd = required > 0 ? Math.Max(0, required - already) : int.MaxValue;
-
-            foreach (var file in results.Take(canAdd))
+            var toAdd = picked.Take(remaining).ToList();
+            foreach (var file in toAdd)
             {
                 var localPath = await PhotoService.SavePickedFileToCacheAsync(file);
 
                 ExtendedInfo.UserPhotos.Add(new Uri(localPath));
             }
+            _ = BuildPhotosGrid();
 
-            BuildPhotosGrid();
-
-            if (required > 0 && results.Count() > canAdd)
-                await DisplayAlert("Лимит", $"Можно добавить ещё {canAdd} фото для этого задания.", "OK");
+            if (required > 0 && results.Count() >= toAdd.Count)
+                await AppAlerts.PhotoLimit();
         }
         catch (Exception ex)
         {
             await AppLogger.Error(ex.ToString());
-            await DisplayAlert("Ошибка", ex.Message, "OK");
+            await AppAlerts.UniversalError(ex.Message);
         }
     }
 }

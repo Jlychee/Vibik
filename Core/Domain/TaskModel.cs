@@ -9,7 +9,7 @@ public class TaskModel
     public int Reward {get; set;}
     
     public bool Completed { get; set; }
-    public TaskModelExtendedInfo ExtendedInfo {get; set;}
+    public TaskModelExtendedInfo? ExtendedInfo {get; set;}
 
     private const double SwapDivisor = 5;
     public int Swap => (int)(Reward / SwapDivisor);

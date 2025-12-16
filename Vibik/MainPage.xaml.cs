@@ -13,19 +13,6 @@ public partial class MainPage
 {
     private bool taskLoaded;
     private static bool taskShouldBeChanged;
-    private static ModerationStatus MapModeration(string? statusString)
-    {
-        var normalized = statusString?.Trim().Trim('"').ToLowerInvariant();
-        return normalized switch
-        {
-            "waiting" => ModerationStatus.Pending,
-            "default" => ModerationStatus.None,
-            "approved" or "approve" or "success" => ModerationStatus.Approved,
-            "rejected" or "reject" or "failed" => ModerationStatus.Rejected,
-            _ => ModerationStatus.None
-        };
-    }
-
     private async Task<bool> ReloadTasksRawAsync()
     {
         var tasks = await taskApi.GetTasksAsync();
@@ -366,7 +353,7 @@ public partial class MainPage
             continue;
         }
 
-        var newStatus = MapModeration(statusString);
+        var newStatus = ModerationStatusService.MapModeration(statusString);
 
         lastKnownModerationStatuses.TryGetValue(task.UserTaskId, out var oldStatus);
         lastKnownModerationStatuses[task.UserTaskId] = newStatus;
