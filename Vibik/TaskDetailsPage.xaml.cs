@@ -1,5 +1,6 @@
 using Core.Domain;
 using Core.Interfaces;
+using Vibik.Services;
 using Vibik.Utils;
 
 namespace Vibik;

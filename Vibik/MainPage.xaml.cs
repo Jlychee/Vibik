@@ -13,16 +13,6 @@ public partial class MainPage
 {
     private bool taskLoaded;
     private static bool taskShouldBeChanged;
-    private async Task<bool> ReloadTasksRawAsync()
-    {
-        var tasks = await taskApi.GetTasksAsync();
-        await AppLogger.Info($"ReloadTasksRawAsync: получено задач = {tasks.Count}");
-
-        allTasks.Clear();
-        allTasks.AddRange(tasks);
-        return true;
-    }
-
     private readonly ITaskApi taskApi;
     private readonly List<TaskModel> allTasks = [];
     private readonly IUserApi userApi;
@@ -247,6 +237,7 @@ public partial class MainPage
                !string.IsNullOrWhiteSpace(accessToken);
     }
     
+    
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -420,6 +411,16 @@ public partial class MainPage
             completedTasks = [];
             await AppLogger.Warn($"Не удалось загрузить выполненные задания: {ex.Message}");
         }
+    }
+    
+    private async Task<bool> ReloadTasksRawAsync()
+    {
+        var tasks = await taskApi.GetTasksAsync();
+        await AppLogger.Info($"ReloadTasksRawAsync: получено задач = {tasks.Count}");
+
+        allTasks.Clear();
+        allTasks.AddRange(tasks);
+        return true;
     }
 
     private async Task ApplyFilter()

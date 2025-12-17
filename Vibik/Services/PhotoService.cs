@@ -1,8 +1,7 @@
 using Core.Domain;
+using Vibik.Utils;
 
-namespace Vibik.Utils;
-
-using Microsoft.Maui.Devices;
+namespace Vibik.Services;
 
 public static class PhotoService
 {
