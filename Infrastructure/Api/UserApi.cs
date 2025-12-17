@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using Core.Domain;
 using Core.Interfaces;
+using Infrastructure.Utils;
 
 namespace Infrastructure.Api;
 
@@ -38,11 +39,34 @@ public class UserApi : IUserApi
     public async Task<bool> RegisterAsync(string username, string displayName, string password,
         CancellationToken ct = default)
     {
-        var response = await httpClient.PostAsJsonAsync(
+        using var response = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserRegister,
             new RegisterRequest(username, displayName, password),
             ct);
-        return response.IsSuccessStatusCode;
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+
+        await AppLogger.Info(
+            $"RegisterAsync: status={(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
+        if (!response.IsSuccessStatusCode)
+        {
+            ApiError? err = null;
+            try
+            {
+                err = System.Text.Json.JsonSerializer.Deserialize<ApiError>(
+                    body, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch { }
+
+            var parsedMessage = err?.Message ?? err?.Error ?? err?.Detail;
+            await AppLogger.Warn(
+                $"RegisterAsync FAILED: {(int)response.StatusCode} {response.ReasonPhrase}; " +
+                $"parsedMessage={parsedMessage}; raw={body}");
+
+            throw new Exception(parsedMessage);
+        }
+
+        return true;
     }
 
     private static User StubUser(string username, string? displayName = null)
@@ -59,4 +83,6 @@ public class UserApi : IUserApi
     private record LoginRequest(string Username, string Password);
 
     private record RegisterRequest(string Username, string DisplayName, string Password);
+    public sealed record ApiError(string? Message, string? Error, string? Detail);
+
 }

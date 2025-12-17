@@ -43,27 +43,31 @@ public partial class RegistrationPage
         try
         {
             await AppLogger.Info($"Регистрация нового пользователя: '{username}'");
-            var registerResult = await userApi.RegisterAsync(username, displayName, password); 
-
-            if (registerResult is false)
+            try
             {
-                ShowError("Не удалось создать аккаунт.");
+                await userApi.RegisterAsync(username, displayName, password);
+                await AppLogger.Info($"try to register {username}");
+            }
+            catch (Exception exception)
+            {
+                await AppLogger.Error("не получилась регистрация {exception.Message}");
+                ShowError($"{exception.Message}");
                 return;
             }
-            
-            Preferences.Set("login_prefill_username_once", username);
-            Preferences.Set("login_prefill_password_once", password);
-
-            await DisplayAlert("Успешно", "Вы успешно зарегистрированы. Теперь нужно войти в аккаунт.", "ОК");
-
-            await Navigation.PopAsync();
         }
         catch (Exception ex)
         {
-            await AppLogger.Error("Ошибка при регистрации", ex);
-
+            await AppLogger.Error(ex.Message);
             ShowError(ex.Message);
+            return;
         }
+        
+        Preferences.Set("login_prefill_username_once", username);
+        Preferences.Set("login_prefill_password_once", password);
+
+        await DisplayAlert("Успешно", "Вы успешно зарегистрированы. Теперь нужно войти в аккаунт.", "ОК");
+
+        await Navigation.PopAsync();
     }
     
     private void OnUsernameTextChanged(object? sender, TextChangedEventArgs e)

@@ -99,7 +99,7 @@ public partial class TaskDetailsPage
         taskModel.ModerationStatus = fullInfoAboutTask.ModerationStatus;
         taskModel.TaskId = fullInfoAboutTask.TaskId;
 
-        taskModel.ExtendedInfo.UserPhotos ??= new List<Uri>();
+        taskModel.ExtendedInfo.UserPhotos ??= [];
         if (fullInfoAboutTask.ExtendedInfo != null)
         {
             taskModel.ExtendedInfo.Description     = fullInfoAboutTask.ExtendedInfo.Description;
