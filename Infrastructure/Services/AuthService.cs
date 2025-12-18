@@ -6,27 +6,21 @@
 
     namespace Infrastructure.Services;
 
-    public class AuthService: IAuthService
+    public class AuthService(IHttpClientFactory httpClientFactory) : IAuthService
     {
-        private readonly IHttpClientFactory httpClientFactory;
         private readonly SemaphoreSlim refreshLock = new(1, 1);
 
         private string? accessToken;
         private string? refreshToken;
 
-        public AuthService(IHttpClientFactory httpClientFactory)
+        public async Task SetTokensAsync(string inputAccessToken, string? inputRefreshToken)
         {
-            this.httpClientFactory = httpClientFactory;
-        }
+            accessToken = inputAccessToken;
+            refreshToken = inputRefreshToken;
 
-        public async Task SetTokensAsync(string accessToken, string? refreshToken)
-        {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-
-            await TokenStorage.SaveAccessTokenAsync(accessToken);
-            if (refreshToken != null)
-                await TokenStorage.SaveRefreshTokenAsync(refreshToken);
+            await TokenStorage.SaveAccessTokenAsync(inputAccessToken);
+            if (inputRefreshToken != null)
+                await TokenStorage.SaveRefreshTokenAsync(inputRefreshToken);
         }
 
         public async Task<string?> GetAccessTokenAsync()
@@ -53,9 +47,12 @@
             try
             {
                 var token = await GetRefreshTokenAsync();
-                await AppLogger.Info(token);
-                if (string.IsNullOrEmpty(token))
-                    return null;
+                if (token != null)
+                {
+                    await AppLogger.Info(token);
+                    if (string.IsNullOrEmpty(token))
+                        return null;
+                }
 
                 var client = httpClientFactory.CreateClient("AuthRefresh");
                 using var response = await client.PostAsync(
@@ -69,7 +66,7 @@
                 var refreshed = await response.Content.ReadFromJsonAsync<LoginUserResponse>(cancellationToken: ct);
                 if (refreshed != null)
                     await SetTokensAsync(refreshed.AccessToken, refreshed.RefreshToken);
-                await AppLogger.Info(refreshed?.ToString());
+                await AppLogger.Info(refreshed?.ToString()?? string.Empty);
                 return refreshed;
             }
             finally
@@ -84,5 +81,4 @@
             refreshToken = null;
             TokenStorage.Clear();
         }
-        private record RefreshRequest(string RefreshToken);
     }

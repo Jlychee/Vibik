@@ -1,6 +1,6 @@
 using Core.Domain;
 
-namespace Vibik.Utils;
+namespace Vibik.Utils.Weather;
 
 public class WeatherUtils
 {

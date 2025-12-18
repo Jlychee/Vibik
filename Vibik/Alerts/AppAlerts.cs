@@ -1,4 +1,4 @@
-namespace Vibik.Utils;
+namespace Vibik.Alerts;
 
 public static class AppAlerts
 {

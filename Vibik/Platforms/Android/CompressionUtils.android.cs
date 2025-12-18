@@ -1,7 +1,7 @@
 using SkiaSharp;
 using ExifInterface = AndroidX.ExifInterface.Media.ExifInterface;
 
-namespace Vibik.Utils;
+namespace Vibik.Utils.Compress;
 
 public static partial class CompressionUtils
 {

@@ -1,7 +1,11 @@
 using Core.Domain;
 using Core.Interfaces;
+using Vibik.Alerts;
 using Vibik.Services;
 using Vibik.Utils;
+using Vibik.Utils.Image;
+using Vibik.ViewModels;
+using CompressionUtils = Vibik.Utils.Compress.CompressionUtils;
 
 namespace Vibik;
 
@@ -200,7 +204,7 @@ public partial class TaskDetailsPage
     private async Task<ModerationStatus> RefreshServerStatusAsync(TaskDetailsViewModel? vm)
     {
         var serverRaw = await taskApi.GetModerationStatusAsync(taskModel.UserTaskId.ToString());
-        var serverStatus = ModerationStatusService.MapModeration(serverRaw);
+        var serverStatus = ModerationStatusConvertor.MapModeration(serverRaw);
 
         UpdateLocalStatus(serverStatus, vm);
         return serverStatus;

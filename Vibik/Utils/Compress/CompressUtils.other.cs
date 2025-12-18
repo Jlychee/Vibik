@@ -1,7 +1,8 @@
+
 #if !ANDROID
 using SkiaSharp;
 
-namespace Vibik.Utils;
+namespace Vibik.Utils.Compress;
 
 public static partial class CompressionUtils
 {

@@ -1,4 +1,4 @@
-namespace Vibik.Utils;
+namespace Vibik.Utils.Weather;
 
 public class Snowflake
 {
@@ -74,7 +74,6 @@ public class SnowfallDrawable : IDrawable
 
             canvas.FillCircle(x, y, f.Radius);
         }
-
         canvas.RestoreState();
     }
 }

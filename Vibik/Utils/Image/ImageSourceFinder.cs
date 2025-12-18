@@ -1,6 +1,6 @@
 using Core.Domain;
 
-namespace Vibik.Utils;
+namespace Vibik.Utils.Image;
 
 public static class ImageSourceFinder
 {

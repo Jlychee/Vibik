@@ -2,7 +2,7 @@ using Core.Domain;
 
 namespace Vibik.Utils;
 
-public static class ModerationStatusService
+public static class ModerationStatusConvertor
 {
     public static ModerationStatus MapModeration(string? statusString)
     {
@@ -11,7 +11,7 @@ public static class ModerationStatusService
         {
             "waiting" => ModerationStatus.Pending,
             "default" => ModerationStatus.None,
-            "approve" => ModerationStatus.Approved,
+            "approved" => ModerationStatus.Approved,
             "reject" => ModerationStatus.Rejected,
             _ => ModerationStatus.None
         };

@@ -6,7 +6,7 @@ public static class TaskPhotosCleaner
 {
     public static void CleanupTaskPhotos(TaskModel task)
     {
-        if (task?.ExtendedInfo?.UserPhotos is null)
+        if (task.ExtendedInfo?.UserPhotos is null)
             return;
 
         var uris = task.ExtendedInfo.UserPhotos.ToList();
@@ -19,7 +19,7 @@ public static class TaskPhotosCleaner
 
         foreach (var uri in uris)
         {
-            if (uri is null || !uri.IsFile)
+            if (!uri.IsFile)
                 continue;
 
             var full = Path.GetFullPath(uri.LocalPath);
@@ -31,7 +31,10 @@ public static class TaskPhotosCleaner
                 if (File.Exists(full))
                     File.Delete(full);
             }
-            catch { }
+            catch
+            {
+                //ignored
+            }
         }
 
         task.ExtendedInfo.UserPhotos.Clear();
@@ -45,6 +48,9 @@ public static class TaskPhotosCleaner
             if (Directory.Exists(dir))
                 Directory.Delete(dir, true);
         }
-        catch { }
+        catch
+        {
+            //ignored
+        }
     }
 }

@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using Core.Domain;
 using Vibik.Utils;
+using Vibik.Utils.Image;
 
 namespace Vibik.Resources.Components;
 

@@ -5,20 +5,10 @@ using Infrastructure.Utils;
 
 namespace Infrastructure.Api;
 
-public class UserApi : IUserApi
+public class UserApi(HttpClient httpClient) : IUserApi
 {
-    private readonly HttpClient httpClient;
-    private readonly bool useStub;
-
-    public UserApi(HttpClient httpClient, bool useStub = false)
-    {
-        this.httpClient = httpClient;
-        this.useStub = useStub;
-    }
-
     public async Task<User?> GetUserAsync(string userId, CancellationToken ct = default)
     {
-        if (useStub) return StubUser(userId);
         return await httpClient.GetFromJsonAsync<User>(
             ApiRoutes.User(),
             ct);
@@ -26,13 +16,19 @@ public class UserApi : IUserApi
 
     public async Task<LoginUserResponse?> LoginAsync(string username, string password, CancellationToken ct = default)
     {
-        if (useStub) return new LoginUserResponse("3f", "fd");
-
         var response = await httpClient.PostAsJsonAsync(
             ApiRoutes.UserLogin,
             new LoginRequest(username, password),
             ct);
-        if (!response.IsSuccessStatusCode) return null;
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            var parsedMessage = GetParsedErrorMessage(body);
+            await AppLogger.Warn(
+                $"LOGIN FAILED: {(int)response.StatusCode} {response.ReasonPhrase}; " +
+                $"parsedMessage={parsedMessage}; raw={body}");
+            throw new Exception(parsedMessage);
+        }
         return await response.Content.ReadFromJsonAsync<LoginUserResponse>(cancellationToken: ct);
     }
 
@@ -48,36 +44,31 @@ public class UserApi : IUserApi
 
         await AppLogger.Info(
             $"RegisterAsync: status={(int)response.StatusCode} {response.ReasonPhrase}; body={body}");
-        if (!response.IsSuccessStatusCode)
-        {
-            ApiError? err = null;
-            try
-            {
-                err = System.Text.Json.JsonSerializer.Deserialize<ApiError>(
-                    body, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-            catch { }
+        if (response.IsSuccessStatusCode) return true;
+        var parsedMessage = GetParsedErrorMessage(body);
+        await AppLogger.Warn(
+            $"RegisterAsync FAILED: {(int)response.StatusCode} {response.ReasonPhrase}; " +
+            $"parsedMessage={parsedMessage}; raw={body}");
 
-            var parsedMessage = err?.Message ?? err?.Error ?? err?.Detail;
-            await AppLogger.Warn(
-                $"RegisterAsync FAILED: {(int)response.StatusCode} {response.ReasonPhrase}; " +
-                $"parsedMessage={parsedMessage}; raw={body}");
+        throw new Exception(parsedMessage);
 
-            throw new Exception(parsedMessage);
-        }
-
-        return true;
     }
 
-    private static User StubUser(string username, string? displayName = null)
+    private static string? GetParsedErrorMessage(string body)
     {
-        return new User
+        ApiError? err = null;
+        try
         {
-            Username = username,
-            DisplayName = displayName ?? "Тестовый пользователь",
-            Level = 5,
-            Experience = 125
-        };
+            err = System.Text.Json.JsonSerializer.Deserialize<ApiError>(
+                body, new System.Text.Json.JsonSerializerOptions {PropertyNameCaseInsensitive = true});
+        }
+        catch
+        {
+            //ignored
+        }
+
+        var parsedMessage = err?.Message ?? err?.Error ?? err?.Detail;
+        return parsedMessage;
     }
 
     private record LoginRequest(string Username, string Password);

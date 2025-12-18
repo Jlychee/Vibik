@@ -1,9 +1,10 @@
-namespace Vibik.Utils;
+namespace Vibik.Alerts;
 
 public static class Alerts
 {
     private const string OkMessage = "ОК";
     private const string ErrorMessage = "Ошибка";
+    
     private static Page? CurrentPage =>
         Application.Current?.MainPage switch
         {

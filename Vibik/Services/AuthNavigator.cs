@@ -1,8 +1,4 @@
 using Core.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
-using Microsoft.Maui.Storage;
 
 namespace Vibik.Services;
 

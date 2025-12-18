@@ -1,4 +1,4 @@
-namespace Vibik.Utils;
+namespace Core.Domain;
 
 public enum AppRefreshReason
 {

@@ -1,5 +1,6 @@
 using Core.Domain;
-using Vibik.Utils;
+using Vibik.Utils.Image;
+using FileResult = Microsoft.Maui.Storage.FileResult;
 
 namespace Vibik.Services;
 
@@ -136,23 +137,6 @@ public static class PhotoService
                 extendedInfo.UserPhotos.Add(new Uri(path));
         }
     }
-    
-    public static void DeleteAllTaskLocalPhotosExcept(string taskKey)
-    {
-        var dir = GetTaskDirectory(taskKey);
-        if (!Directory.Exists(dir)) return;
-        
-        foreach (var file in Directory.EnumerateFiles(dir))
-        {
-            try
-            {
-                var full = Path.GetFullPath(file); 
-                File.Delete(full);
-            }
-            catch { }
-        }
-    }
-
 }
 
     

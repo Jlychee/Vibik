@@ -27,7 +27,10 @@
                              Clicked="OnCloseModerationBannerClicked" />
             </Grid>
         </Frame>
-
+        <RefreshView
+            IsRefreshing="{Binding IsRefreshing}"
+            Command="{Binding RefreshCommand}">
+        
         <ScrollView>
             <VerticalStackLayout x:Name="PageStack"
                                  Spacing="18"
@@ -151,7 +154,7 @@
 
             </VerticalStackLayout>
         </ScrollView>
-
+        </RefreshView>
         <!-- навигация -->
         <Frame BackgroundColor="{StaticResource LightYelloww}"
                Padding="0"
@@ -185,5 +188,10 @@
                              Clicked="OnProfileClicked"/>
             </Grid>
         </Frame>
+        <Button Text="Забрать последние логи"
+                IsVisible="False"
+                MaximumHeightRequest="30"
+                Clicked="OnShareLatestLogClicked"></Button>
+
     </Grid>
 </ContentPage>

@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls.Maps;
 using Microsoft.Maui.Maps;
 using Vibik.Utils;
+using Vibik.Utils.Weather;
 
 namespace Vibik;
 

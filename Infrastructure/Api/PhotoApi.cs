@@ -22,11 +22,14 @@ public class PhotoApi(HttpClient http) : IPhotoApi
         {
             var payload = await resp.Content.ReadFromJsonAsync<UploadResponse>(cancellationToken: ct);
             if (!string.IsNullOrWhiteSpace(payload?.Result))
-                return payload!.Result;
+                return payload.Result;
         }
-        catch { }
+        catch 
+        {
+            // ignored
+        }
 
-        if (resp.Headers.Location is Uri u) return u.ToString();
+        if (resp.Headers.Location is { } u) return u.ToString();
 
         var text = await resp.Content.ReadAsStringAsync(ct);
         return string.IsNullOrWhiteSpace(text) ? null : text;

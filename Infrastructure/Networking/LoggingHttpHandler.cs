@@ -52,19 +52,16 @@ public sealed class HttpLoggingHandler : DelegatingHandler
         sb.AppendLine($"Response: {(int)response.StatusCode} {response.ReasonPhrase}");
         AppendHeaders(sb, "ResponseHeaders", response.Headers);
 
-        if (response.Content is not null)
+        AppendHeaders(sb, "ResponseContentHeaders", response.Content.Headers);
+        try
         {
-            AppendHeaders(sb, "ResponseContentHeaders", response.Content.Headers);
-            try
-            {
-                var respBody = await response.Content.ReadAsStringAsync(ct);
-                if (!string.IsNullOrWhiteSpace(respBody))
-                    sb.AppendLine($"ResponseContent: {respBody}");
-            }
-            catch (Exception ex)
-            {
-                sb.AppendLine($"ResponseContent read failed: {ex.Message}");
-            }
+            var respBody = await response.Content.ReadAsStringAsync(ct);
+            if (!string.IsNullOrWhiteSpace(respBody))
+                sb.AppendLine($"ResponseContent: {respBody}");
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"ResponseContent read failed: {ex.Message}");
         }
 
         sb.AppendLine(new string('-', 80));

@@ -1,5 +1,3 @@
-using Core;
-using Core.Domain;
 using Core.Interfaces;
 
 namespace Vibik;

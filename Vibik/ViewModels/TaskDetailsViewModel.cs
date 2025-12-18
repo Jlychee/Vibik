@@ -1,8 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Core.Domain;
+using Vibik.Utils;
+using Vibik.Utils.Image;
 
-namespace Vibik.Utils;
+namespace Vibik.ViewModels;
 
 public sealed class TaskDetailsViewModel : INotifyPropertyChanged
 {
