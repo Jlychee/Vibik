@@ -7,3 +7,4 @@ riderModule.iml
 Infrastructure/.env
 weathersettings.json
 raw-http.log
+myapp.keystore
