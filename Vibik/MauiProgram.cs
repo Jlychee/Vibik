@@ -38,16 +38,16 @@ public static class MauiProgram
         var backendBaseUri =
 #if ANDROID
             //new Uri("http://158.160.105.104:5000");
-            //new Uri("http://158.160.126.197:5000");
-            new Uri("http://89.169.175.21:5000");
+            new Uri("http://158.160.126.197:5000");
+            //new Uri("http://89.169.175.21:5000");
             EntryHandler.Mapper.AppendToMapping("NoUnderline", (handler, _) =>
             {
                 handler.PlatformView.Background = null;
             });
 #else
             //new Uri("https://158.160.105.104:5000");
-            //new Uri("http://158.160.126.197:5000");
-        new Uri("http://89.169.175.21:5000");
+            new Uri("http://158.160.126.197:5000");
+        //new Uri("http://89.169.175.21:5000");
 #endif
         builder.Services.AddHttpClient("AuthRefresh", client =>
         {
