@@ -30,7 +30,8 @@
                    CornerRadius="24"
                    HasShadow="True"
                    VerticalOptions="Center"
-                   HorizontalOptions="Center">
+                   HorizontalOptions="Fill"
+                   MaximumWidthRequest="520">
 
                 <Grid RowDefinitions="Auto,*">
                     <!-- Шапка -->
@@ -70,8 +71,8 @@
                                     Text="Посмотреть нашу карту"
                                     Clicked="ViewTheMap"
                                     CornerRadius="16"
-                                    HeightRequest="56"
-                                    FontSize="16"
+                                    MinimumHeightRequest="56"
+                                    FontSize="{OnIdiom Phone=13, Tablet=16}"
                                     Padding="10,0"
                                     LineBreakMode="WordWrap"
                                     HorizontalOptions="Fill"
@@ -82,8 +83,8 @@
                                     Text="Выйти на главный экран"
                                     Clicked="ReturnToMainPage"
                                     CornerRadius="16"
-                                    HeightRequest="56"
-                                    FontSize="16"
+                                    MinimumHeightRequest="56"
+                                    FontSize="{OnIdiom Phone=13, Tablet=16}"
                                     Padding="10,0"
                                     LineBreakMode="WordWrap"
                                     HorizontalOptions="Fill"

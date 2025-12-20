@@ -161,7 +161,7 @@
                            Grid.Column="1"
                            BackgroundColor="{StaticResource Mint}"
                            CornerRadius="18"
-                           Padding="8"
+                           Padding="16"
                            HasShadow="False"
                            WidthRequest="161"
                            HeightRequest="161">

@@ -98,4 +98,9 @@ public partial class RegistrationPage
         RepeatPasswordEntry.IsPassword = !RepeatPasswordEntry.IsPassword;
         TogglePasswordRepeatVisibilityButton.Source = RepeatPasswordEntry.IsPassword ? "eye_show.svg" : "eye_hide.svg";
     }
+
+    private async void OnLoginClick(object? sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new LoginPage(userApi, authService));
+    }
 }
