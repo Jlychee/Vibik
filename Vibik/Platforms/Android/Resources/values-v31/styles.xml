@@ -1,7 +1,7 @@
 <resources>
     <style name="MySplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowSplashScreenBackground">@color/vibik_splash_screen</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/logo128</item>
 
         <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
     </style>
