@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Коричневый фон -->
     <color name="vibik_brown">#6D4C41</color>
     <color name="vibik_splash_screen">#588088</color>
 </resources>

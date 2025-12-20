@@ -55,7 +55,6 @@ public partial class MainPage : IMainPageView
     private void OnCloseModerationBannerClicked(object sender, EventArgs e)
         => ViewModel.CloseModerationBanner();
 
-    // Оставляю как было (UI/Share), чтобы “больше ничего не трогать”
     private async void OnShareLatestLogClicked(object sender, EventArgs e)
     {
         var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");

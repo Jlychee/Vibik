@@ -10,8 +10,6 @@ public class TaskModel
     
     public bool Completed { get; set; }
     public TaskModelExtendedInfo? ExtendedInfo {get; set;}
-
-    private const double SwapDivisor = 5;
-    public int Swap => (int)(Reward / SwapDivisor);
+    public int Swap { get; set; }
     public ModerationStatus ModerationStatus {get; set;}
 }
