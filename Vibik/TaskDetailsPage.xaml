@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Vibik.TaskDetailsPage">
+    <Grid>
+    <ScrollView>
+        <VerticalStackLayout Spacing="18" Padding="16">
+            <Frame BackgroundColor="{StaticResource MilkChocolate}"
+                   CornerRadius="11"
+                   Padding="0"
+                   HasShadow="True">
+                <Grid RowDefinitions="Auto,Auto">
+                    <!-- верхний элемент с заголовком -->
+                    <Grid BackgroundColor="{StaticResource MilkChocolate}" Padding="16">
+                        <Label Text="{Binding TaskName}"
+                               FontSize="32"
+                               TextColor="{StaticResource LightYelloww}"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center"/>
+                    </Grid>
+                    
+                    <!-- описание + сетка для фоток -->
+                    <Grid BackgroundColor="{StaticResource NavySeal}" Padding="16,24,16,24" Row="1">
+                        <VerticalStackLayout Spacing="24">
+                            <!-- descriprion -->
+                            <Label Text="{Binding Description}"
+                                   FontSize="20"
+                                   TextColor="Black"/>
+                            <Label Text="{Binding PhotoCountLabel}"
+                                   FontSize="20"
+                                   TextColor="Black"/>
+                            <!-- сетка для фоток(горизонтальный скролл -->
+                            <ScrollView Orientation="Horizontal">
+                                <Grid x:Name="PhotoShotsGrid"
+                                      ColumnSpacing="24"
+                                      RowSpacing="24"/>
+                            </ScrollView>
+                            <Button
+                                Text="+ Добавить несколько"
+                                TextColor="{StaticResource MilkChocolate}"
+                                BorderColor="{StaticResource MilkChocolate}"
+                                BorderWidth="1"
+                                BackgroundColor="Transparent"
+                                Clicked="OnAddManyPhotosClicked"
+                                Margin="0,8,0,0" />
+
+                            <!-- ~1~ пример @1@ -->
+                            <!-- <Label Text="Пример" FontSize="32" TextColor="Black" -->
+                            <!--        HorizontalTextAlignment="Center" Margin="15" Padding="0"/> -->
+                            <!-- <Image Source="{Binding ExampleCollage, TargetNullValue=example_collage.png}"  -->
+                            <!--        Aspect="AspectFit" Margin="43"/> -->
+                            <!-- -->
+                            <!-- кнопка сдать задание -->   
+                            <Button
+                                x:Name="SendButton"
+                                Text="{Binding SendButtonText}"
+                                IsEnabled="{Binding CanSend}"
+                                Clicked="OnSendClick"
+                                CornerRadius="16"
+                                HeightRequest="56"
+                                FontSize="20"
+                                BackgroundColor="{StaticResource MilkChocolate}"
+                                TextColor="{StaticResource LightYelloww}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Grid>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+        <Grid IsVisible="{Binding IsSending}"
+              BackgroundColor="#80000000"
+              InputTransparent="False">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="12">
+                <ActivityIndicator IsRunning="{Binding IsSending}" />
+                <Label Text="Отправляем…"
+                       TextColor="White"
+                       FontSize="16"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -3,3 +3,8 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+/.env
+Infrastructure/.env
+weathersettings.json
+raw-http.log
+myapp.keystore

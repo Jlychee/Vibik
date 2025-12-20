@@ -1,0 +1,9 @@
+<resources>
+    <style name="MyMainTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/vibik_brown</item>
+    </style>
+
+    <style name="MySplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/vibik_brown</item>
+    </style>
+</resources>

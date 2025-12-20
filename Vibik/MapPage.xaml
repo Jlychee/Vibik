@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             x:Class="Vibik.MapPage"
+             Title="Карта">
+
+    <Grid>
+
+        <maps:Map x:Name="MapControl"
+                  HorizontalOptions="Fill"
+                  VerticalOptions="Fill" />
+
+        <GraphicsView x:Name="SnowView"
+                      HorizontalOptions="Fill"
+                      VerticalOptions="Fill"
+                      InputTransparent="True" />
+
+        <VerticalStackLayout
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Spacing="24">
+
+            <Frame x:Name="NotifyFrame"
+                   IsVisible="True"
+                   BackgroundColor="{StaticResource NavySeal}"
+                   Padding="0"
+                   Margin="24"
+                   CornerRadius="24"
+                   HasShadow="True"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Fill"
+                   MaximumWidthRequest="520">
+
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Шапка -->
+                    <Grid Grid.Row="0"
+                          BackgroundColor="{StaticResource MilkChocolate}"
+                          Padding="24,16">
+                        <Label Text="Здесь пока что просто идет снег..."
+                               FontSize="22"
+                               TextColor="{StaticResource LightYelloww}"
+                               HorizontalTextAlignment="Center" />
+                    </Grid>
+
+                    <!-- Тело карточки -->
+                    <VerticalStackLayout Grid.Row="1"
+                                         Spacing="12"
+                                         HorizontalOptions="Center"
+                                         VerticalOptions="Center"
+                                         Padding="0,16,0,0"
+                                         Margin="7, 0, 7,16">
+
+                        <Label Text="Реализация карты появится чуть-чуть позже, извините за ожидание"
+                               FontSize="19.25"
+                               TextColor="Black"
+                               HorizontalTextAlignment="Start" />
+
+                        <Label Text="Пока вы можете:"
+                               Margin="0,0,0,0"
+                               FontSize="19.25"
+                               TextColor="Black"
+                               HorizontalTextAlignment="Start" />
+
+                        <Grid Margin="0,8,0,0"
+                              ColumnDefinitions="*,*"
+                              ColumnSpacing="12">
+
+                            <Button Grid.Column="0"
+                                    Text="Посмотреть нашу карту"
+                                    Clicked="ViewTheMap"
+                                    CornerRadius="16"
+                                    MinimumHeightRequest="56"
+                                    FontSize="{OnIdiom Phone=13, Tablet=16}"
+                                    Padding="10,0"
+                                    LineBreakMode="WordWrap"
+                                    HorizontalOptions="Fill"
+                                    BackgroundColor="{StaticResource MilkChocolate}"
+                                    TextColor="{StaticResource White}" />
+
+                            <Button Grid.Column="1"
+                                    Text="Выйти на главный экран"
+                                    Clicked="ReturnToMainPage"
+                                    CornerRadius="16"
+                                    MinimumHeightRequest="56"
+                                    FontSize="{OnIdiom Phone=13, Tablet=16}"
+                                    Padding="10,0"
+                                    LineBreakMode="WordWrap"
+                                    HorizontalOptions="Fill"
+                                    BackgroundColor="{StaticResource Mint}"
+                                    TextColor="{StaticResource White}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+            </Frame>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

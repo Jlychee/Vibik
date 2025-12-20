@@ -1,23 +1,79 @@
-﻿namespace Vibik;
+﻿using Core.Interfaces;
 
-public partial class MainPage : ContentPage
+namespace Vibik;
+
+public partial class MainPage : IMainPageView
 {
-    int count = 0;
+    public MainPageViewModel ViewModel { get; }
 
-    public MainPage()
+    public MainPage(
+        ITaskApi taskApi,
+        IUserApi userApi,
+        LoginPage loginPage,
+        IWeatherApi weatherApi,
+        IAuthService authService)
     {
         InitializeComponent();
+
+        ViewModel = new MainPageViewModel(
+            this,
+            taskApi,
+            userApi,
+            loginPage,
+            weatherApi,
+            authService);
+
+        BindingContext = ViewModel;
     }
 
-    private void OnCounterClicked(object? sender, EventArgs e)
+    // IMainPageView
+    Layout IMainPageView.CardsHost => CardsHost;
+    Task IMainPageView.DisplayAlert(string title, string message, string cancel)
+        => DisplayAlert(title, message, cancel);
+
+    protected override async void OnAppearing()
     {
-        count++;
+        base.OnAppearing();
+        await ViewModel.OnAppearingAsync();
+    }
 
-        if (count == 1)
-            CounterBtn.Text = $"Clicked {count} time";
-        else
-            CounterBtn.Text = $"Clicked {count} times";
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        ViewModel.OnDisappearing();
+    }
 
-        SemanticScreenReader.Announce(CounterBtn.Text);
+    private async void OnMapClicked(object sender, EventArgs e)
+        => await ViewModel.NavigateToMapAsync();
+
+    private async void OnHomeClicked(object sender, EventArgs e)
+        => await ViewModel.NavigateHomeAsync();
+
+    private async void OnProfileClicked(object sender, EventArgs e)
+        => await ViewModel.NavigateToProfileAsync();
+
+    private void OnCloseModerationBannerClicked(object sender, EventArgs e)
+        => ViewModel.CloseModerationBanner();
+
+    private async void OnShareLatestLogClicked(object sender, EventArgs e)
+    {
+        var dir = Path.Combine(FileSystem.AppDataDirectory, "logs");
+        Directory.CreateDirectory(dir);
+
+        var last = Directory.GetFiles(dir, "*.log")
+            .OrderByDescending(f => f)
+            .FirstOrDefault();
+
+        if (last is null)
+        {
+            await DisplayAlert("Логи", "Файл логов ещё не создан. Сначала сделай HTTP-запрос.", "OK");
+            return;
+        }
+
+        await Share.Default.RequestAsync(new ShareFileRequest
+        {
+            Title = "Vibik log",
+            File = new ShareFile(last)
+        });
     }
 }

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Vibik.ProfilePage"
+             Title="Профиль">
+    
+    <Grid BackgroundColor="{StaticResource NavySeal}">
+        <ScrollView x:Name="ProfileScroll" HorizontalOptions="Center">
+            <VerticalStackLayout Padding="24,60,24,100"
+                                    Spacing="24"
+                                    HorizontalOptions="Center">
+
+                <!-- Аватар -->
+                <Frame WidthRequest="180"
+                       HeightRequest="180"
+                       CornerRadius="90"
+                       Padding="32"
+                       BackgroundColor="{StaticResource Mint}"
+                       BorderColor="{StaticResource MilkChocolate}"
+                       HasShadow="False"
+                       HorizontalOptions="Center">
+                    <Image Source="duck_avatar.svg"
+                           Aspect="AspectFit" />
+                </Frame>
+                
+                <Label Text="{Binding DisplayName}"
+                       FontSize="30"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource Black}"
+                       Padding="0,0,0,-5"/>
+                <HorizontalStackLayout Spacing="2"
+                                       HorizontalOptions="Center">
+                       
+                       <Image Source="login_icon.svg"
+                              WidthRequest="20"
+                              HeightRequest="20"
+                              VerticalOptions="Center" />
+                    <Label Text="{Binding Username}"
+                           FontSize="18"
+                           TextColor="{StaticResource Black}" />
+                </HorizontalStackLayout>
+
+                <!-- 4 карточки статистики -->
+                <Grid ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="16"
+                      RowSpacing="16"
+                      Margin="0,24,0,0">
+
+                    <!-- Уровень -->
+                    <Frame Grid.Row="0"
+                           Grid.Column="0"
+                           BackgroundColor="{StaticResource Mint}"
+                           CornerRadius="18"
+                           Padding="16"
+                           HasShadow="False"
+                           WidthRequest="161"
+                           HeightRequest="161">
+                           <Grid>
+
+                                  <!-- Пламя: сдвигаем вниз -->
+                                  <Image Source="level_flame.svg"
+                                         Aspect="AspectFit"
+                                         VerticalOptions="End"
+                                         Margin="0,-300,0,0" />
+
+                                  <!-- Текст и цифра поверх -->
+                                  <VerticalStackLayout Padding="12"
+                                                       VerticalOptions="FillAndExpand"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       Spacing="0">
+                                         <Label Text="Уровень"
+                                                FontSize="14.25"
+                                                TextColor="Black"
+                                                HorizontalTextAlignment="Center" 
+                                                Margin="0,-10,0,0"/>
+
+                                         <Label Text="{Binding Level}"
+                                                FontSize="53"
+                                                FontAttributes="Bold"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="CenterAndExpand"
+                                                Margin="0,20,0,0"/>
+                                  </VerticalStackLayout>
+
+                           </Grid>
+                    </Frame>
+
+                    <!-- Монеты / опыт -->
+                    <Frame Grid.Row="0"
+                           Grid.Column="1"
+                           BackgroundColor="{StaticResource Mint}"
+                           CornerRadius="18"
+                           Padding="16"
+                           HasShadow="False"
+                           WidthRequest="161"
+                           HeightRequest="161">
+                           <Grid>
+                                  <Image Source="coins_icon.svg"
+                                         Aspect="AspectFit"
+                                         VerticalOptions="End"
+                                         Margin="0,-70,0,0"/>
+                                  <VerticalStackLayout Padding="12"
+                                                       VerticalOptions="FillAndExpand"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       Spacing="8">
+                                         <Label Text="Монеты"
+                                                FontSize="14.25"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                Margin="0,-10,0,0"/>
+                                         <Label Text="{Binding Money}"
+                                                FontSize="40"
+                                                FontAttributes="Bold"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="CenterAndExpand" 
+                                                Margin="0,20,0,0"/>
+                                  </VerticalStackLayout>
+                           </Grid>
+                    </Frame>
+
+                    <!-- Выполненные задания -->
+                    <Frame Grid.Row="1"
+                           Grid.Column="0"
+                           BackgroundColor="{StaticResource Mint}"
+                           CornerRadius="18"
+                           Padding="8"
+                           HasShadow="False"
+                           WidthRequest="161"
+                           HeightRequest="161">
+                           <Grid>
+                                  <Image Source="tasks_done_icon.svg"
+                                         Aspect="AspectFit"
+                                         VerticalOptions="End"
+                                         Margin="0,-70,0,0"/>
+                                  <VerticalStackLayout Padding="12"
+                                                       VerticalOptions="FillAndExpand"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       Spacing="8">
+                                         <Label Text="Выполненные задания"
+                                                FontSize="13.25"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                HorizontalTextAlignment="Center"
+                                                Margin="0,-10,0,0"/>
+                                         <Label Text="{Binding CompletedTasks}"
+                                                FontSize="53"
+                                                FontAttributes="Bold"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="CenterAndExpand"
+                                                Margin="4,4,0,0"/>
+                                  </VerticalStackLayout>
+                           </Grid>
+                    </Frame>
+
+                    <!-- Моих мест на карте -->
+                    <Frame Grid.Row="1"
+                           Grid.Column="1"
+                           BackgroundColor="{StaticResource Mint}"
+                           CornerRadius="18"
+                           Padding="16"
+                           HasShadow="False"
+                           WidthRequest="161"
+                           HeightRequest="161">
+                           <Grid>
+                                  <Image Source="map_place_icon.svg"
+                                         Aspect="AspectFit"
+                                         VerticalOptions="End"
+                                         Margin="0,-70,0,0"/>
+                                  <VerticalStackLayout Padding="12"
+                                                       VerticalOptions="FillAndExpand"
+                                                       HorizontalOptions="FillAndExpand"
+                                                       Spacing="8">
+                                         <Label Text="Опыт"
+                                                FontSize="14.25"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                HorizontalTextAlignment="Center"
+                                                Margin="0,-10,0,0"/>
+                                         <Label Text="{Binding Experience}"
+                                                FontSize="53"
+                                                FontAttributes="Bold"
+                                                TextColor="Black"
+                                                HorizontalOptions="Center"
+                                                VerticalOptions="CenterAndExpand"
+                                                Margin="4,4,0,0"/>
+                                  </VerticalStackLayout>
+                           </Grid>
+                    </Frame>
+
+                </Grid>
+                <Button Text="Выйти"
+                        Margin="0,32,0,0"
+                        HeightRequest="50"
+                        CornerRadius="20"
+                        BackgroundColor="{StaticResource MilkChocolate}"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        Clicked="OnLogoutClicked" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- навигация -->
+        <Frame BackgroundColor="{StaticResource LightYelloww}"
+               Padding="0"
+               HasShadow="False"
+               CornerRadius="0"
+               VerticalOptions="End"
+               HorizontalOptions="Fill"
+               HeightRequest="70">
+               <Grid ColumnDefinitions="*,*,*"
+                     HorizontalOptions="FillAndExpand">
+                      <ImageButton Grid.Column="1"
+                                   Source="map_icon.svg"
+                                   BackgroundColor="Transparent"
+                                   HeightRequest="32"
+                                   WidthRequest="32"
+                                   Aspect="Fill"
+                                   Clicked="OnMapClicked"/>
+                      <ImageButton Grid.Column="0"
+                                   Source="home_icon.svg"
+                                   BackgroundColor="Transparent"
+                                   HeightRequest="53"
+                                   WidthRequest="53"
+                                   Aspect="Fill"
+                                   Clicked="OnHomeClicked"/>
+                      <ImageButton Grid.Column="2"
+                                   Source="profile_icon.svg"
+                                   BackgroundColor="Transparent"
+                                   HeightRequest="32"
+                                   WidthRequest="32"
+                                   Aspect="Fill"
+                                   Clicked="OnProfileClicked"/>
+               </Grid>
+        </Frame>
+    </Grid>
+</ContentPage>
