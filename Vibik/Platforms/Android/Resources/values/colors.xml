@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#864E3F</color>
-    <color name="colorPrimaryDark">#723E26</color>
-    <color name="colorAccent">#723E26</color>
+    <!-- Коричневый фон -->
+    <color name="vibik_brown">#6D4C41</color>
+    <color name="vibik_splash_screen">#588088</color>
 </resources>
